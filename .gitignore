@@ -23,5 +23,3 @@ dist-ssr
 *.sln
 *.sw?
 
-# Personal Claude Code instructions, never pushed
-CLAUDE.md
