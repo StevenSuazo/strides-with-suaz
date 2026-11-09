@@ -21,56 +21,57 @@ Decide each week's training volume. Build a target curve from race day backward,
 
 Unit decision: weekly volume is stored in **miles**. It matches Strava's distance data and the way I think about the plan. Early prep guidance in minutes is advice only, not engine input.
 
-| Input | Type | Unit | Valid range |
-| --- | --- | --- | --- |
-| Race date | `Date` | n/a | in the future |
-| Plan start date | `Date` (a Monday) | n/a | before race date |
-| Total weeks | `number` | weeks | 1 or more (19 for this plan) |
-| Starting weekly miles (week 1 target) | `number` | miles | 0 or more |
-| Peak weekly miles | `number` | miles | at least starting miles |
-| Last week: target miles | `number` | miles | greater than 0 |
-| Last week: actual miles | `number` | miles | 0 or more |
-| Last week: max pain score | `number` | 0 to 10 | integer |
+| Input                                 | Type              | Unit    | Valid range                  |
+| ------------------------------------- | ----------------- | ------- | ---------------------------- |
+| Race date                             | `Date`            | n/a     | in the future                |
+| Plan start date                       | `Date` (a Monday) | n/a     | before race date             |
+| Total weeks                           | `number`          | weeks   | 1 or more (19 for this plan) |
+| Starting weekly miles (week 1 target) | `number`          | miles   | 0 or more                    |
+| Peak weekly miles                     | `number`          | miles   | at least starting miles      |
+| Last week: target miles               | `number`          | miles   | greater than 0               |
+| Last week: actual miles               | `number`          | miles   | 0 or more                    |
+| Last week: max pain score             | `number`          | 0 to 10 | integer                      |
 
 Config, with defaults I can tune:
 
-| Setting | Default |
-| --- | --- |
-| advanceThreshold | 0.90 |
-| repeatThreshold | 0.80 |
-| normalStep | 0.10 |
-| reducedStep | 0.05 |
-| minStepMiles (normal / reduced) | 0.5 / 0.25 |
-| recoveryEvery | 4 weeks |
-| recoveryFactor | 0.75 |
-| taperFactor | 0.70 |
-| longRunMaxShare | 0.50 |
-| longRunStepMiles | 1 |
-| painThreshold | open question |
+| Setting                         | Default       |
+| ------------------------------- | ------------- |
+| advanceThreshold                | 0.90          |
+| repeatThreshold                 | 0.80          |
+| normalStep                      | 0.10          |
+| reducedStep                     | 0.05          |
+| minStepMiles (normal / reduced) | 0.5 / 0.25    |
+| recoveryEvery                   | 4 weeks       |
+| recoveryFactor                  | 0.75          |
+| taperFactor                     | 0.70          |
+| longRunMaxShare                 | 0.50          |
+| longRunStepMiles                | 1             |
+| painThreshold                   | open question |
 
 ## 4. Outputs
 
 ```ts
-type Decision = 'advance' | 'repeat' | 'stepBack' | 'recovery' | 'taper' | 'race';
+type Decision =
+  'advance' | 'repeat' | 'stepBack' | 'recovery' | 'taper' | 'race'
 
 type WeekTarget = {
-  weekIndex: number;
-  targetMiles: number;
-  longRunMiles: number;
-};
+  weekIndex: number
+  targetMiles: number
+  longRunMiles: number
+}
 
 type GateResult = {
-  next: WeekTarget;
-  decision: Decision;
-  reducedMode: boolean; // true while progression is +5% instead of +10%
-  reason: string;       // plain English, shown in the UI
-};
+  next: WeekTarget
+  decision: Decision
+  reducedMode: boolean // true while progression is +5% instead of +10%
+  reason: string // plain English, shown in the UI
+}
 
 type GoalCheck = {
-  onTrack: boolean;
-  gapMiles: number;     // curve target minus what the capped path can reach
-  reachablePeakMiles: number;
-};
+  onTrack: boolean
+  gapMiles: number // curve target minus what the capped path can reach
+  reachablePeakMiles: number
+}
 ```
 
 Functions to write:
@@ -91,14 +92,14 @@ Target curve (built once, rebuilt if the plan changes):
 
 Weekly gate, using `ratio = actual / target`:
 
-| Ratio | Pain | Decision | Next target |
-| --- | --- | --- | --- |
-| 0.90 or more | at or under threshold | advance | min(curve next, max(actual × 1.10, actual + 0.5)) |
-| 0.80 to 0.90 | at or under | repeat | same target |
-| under 0.80 | any | stepBack | actual miles; reduced mode on (+5%) |
-| any | over threshold | stepBack | 0.70 × this week's target; long run does not grow; reduced mode on |
-| recovery week | n/a | recovery | 0.75 × previous week; next advance starts from the week before the recovery |
-| taper / race | n/a | taper / race | fixed fractions of peak, no gate |
+| Ratio         | Pain                  | Decision     | Next target                                                                 |
+| ------------- | --------------------- | ------------ | --------------------------------------------------------------------------- |
+| 0.90 or more  | at or under threshold | advance      | min(curve next, max(actual × 1.10, actual + 0.5))                           |
+| 0.80 to 0.90  | at or under           | repeat       | same target                                                                 |
+| under 0.80    | any                   | stepBack     | actual miles; reduced mode on (+5%)                                         |
+| any           | over threshold        | stepBack     | 0.70 × this week's target; long run does not grow; reduced mode on          |
+| recovery week | n/a                   | recovery     | 0.75 × previous week; next advance starts from the week before the recovery |
+| taper / race  | n/a                   | taper / race | fixed fractions of peak, no gate                                            |
 
 Reduced mode turns off after two weeks in a row with ratio at or above 0.90.
 
@@ -124,14 +125,14 @@ Write these before the implementation.
 
 Gate examples:
 
-| Target | Actual | Pain | Curve next | Expected |
-| --- | --- | --- | --- | --- |
-| 10 | 10 | low | 12 | advance, next 11.0 |
-| 10 | 9.0 | low | 12 | advance (ratio 0.90 is the boundary), next 9.9 |
-| 10 | 8.5 | low | 12 | repeat, next 10 |
-| 10 | 7.0 | low | 12 | stepBack, next 7.0, reduced mode on |
-| 10 | 10 | high | 12 | stepBack, next 7.0 |
-| 4 | 4 | low | 6 | advance, next 4.5 (minimum step) |
+| Target | Actual | Pain | Curve next | Expected                                       |
+| ------ | ------ | ---- | ---------- | ---------------------------------------------- |
+| 10     | 10     | low  | 12         | advance, next 11.0                             |
+| 10     | 9.0    | low  | 12         | advance (ratio 0.90 is the boundary), next 9.9 |
+| 10     | 8.5    | low  | 12         | repeat, next 10                                |
+| 10     | 7.0    | low  | 12         | stepBack, next 7.0, reduced mode on            |
+| 10     | 10     | high | 12         | stepBack, next 7.0                             |
+| 4      | 4      | low  | 6          | advance, next 4.5 (minimum step)               |
 
 Curve and goal check:
 
