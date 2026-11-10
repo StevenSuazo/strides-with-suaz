@@ -6,13 +6,16 @@
  *
  * roundMiles(value)
  * - Input: any finite number of miles. Output: that number to one decimal.
- * - Decide the rule for exact halves (4.25) and write it in the test.
+ * - Exact halves round up (4.25 gives 4.3), the same as Math.round.
  * - Throw a RangeError for NaN or Infinity.
  *
  * Tests: rounding.test.ts. Write them first.
- * Status: stub, throws until implemented.
+ * Status: done.
  */
 
-export const roundMiles: (value: number) => number = () => {
-  throw new Error('roundMiles: not implemented')
+export const roundMiles: (value: number) => number = (value) => {
+  if (!Number.isFinite(value)) {
+    throw new RangeError(`roundMiles: expected a finite number, got ${value}`)
+  }
+  return Math.round(value * 10) / 10
 }
