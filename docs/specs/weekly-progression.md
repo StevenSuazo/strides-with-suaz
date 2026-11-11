@@ -21,32 +21,32 @@ Decide each week's training volume. Build a target curve from race day backward,
 
 Unit decision: weekly volume is stored in **miles**. It matches Strava's distance data and the way I think about the plan. Early prep guidance in minutes is advice only, not engine input.
 
-| Input                                 | Type              | Unit    | Valid range                  |
-| ------------------------------------- | ----------------- | ------- | ---------------------------- |
-| Race date                             | `Date`            | n/a     | in the future                |
-| Plan start date                       | `Date` (a Monday) | n/a     | before race date             |
-| Total weeks                           | `number`          | weeks   | 1 or more (19 for this plan) |
-| Starting weekly miles (week 1 target) | `number`          | miles   | 0 or more                    |
-| Peak weekly miles                     | `number`          | miles   | at least starting miles      |
-| Last week: target miles               | `number`          | miles   | greater than 0               |
-| Last week: actual miles               | `number`          | miles   | 0 or more                    |
-| Last week: max pain score             | `number`          | 0 to 10 | integer                      |
+| Input                                   | Type              | Unit    | Valid range                                                    |
+| --------------------------------------- | ----------------- | ------- | -------------------------------------------------------------- |
+| Race date                               | `Date`            | n/a     | in the future                                                  |
+| Plan start date                         | `Date` (a Monday) | n/a     | before race date                                               |
+| Total weeks                             | `number`          | weeks   | 1 or more (19 for this plan)                                   |
+| Starting weekly miles (week 1 target)   | `number`          | miles   | 0 or more                                                      |
+| Peak weekly miles                       | `number`          | miles   | at least starting miles                                        |
+| Last week: target miles                 | `number`          | miles   | greater than 0                                                 |
+| Last week: actual miles                 | `number`          | miles   | 0 or more                                                      |
+| Last week: highest check-in pain number | `number`          | 0 to 10 | integer, highest across all body areas and check-ins that week |
 
 Config, with defaults I can tune:
 
-| Setting                         | Default       |
-| ------------------------------- | ------------- |
-| advanceThreshold                | 0.90          |
-| repeatThreshold                 | 0.80          |
-| normalStep                      | 0.10          |
-| reducedStep                     | 0.05          |
-| minStepMiles (normal / reduced) | 0.5 / 0.25    |
-| recoveryEvery                   | 4 weeks       |
-| recoveryFactor                  | 0.75          |
-| taperFactor                     | 0.70          |
-| longRunMaxShare                 | 0.50          |
-| longRunStepMiles                | 1             |
-| painThreshold                   | open question |
+| Setting                         | Default                                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| advanceThreshold                | 0.90                                                                                              |
+| repeatThreshold                 | 0.80                                                                                              |
+| normalStep                      | 0.10                                                                                              |
+| reducedStep                     | 0.05                                                                                              |
+| minStepMiles (normal / reduced) | 0.5 / 0.25                                                                                        |
+| recoveryEvery                   | 4 weeks                                                                                           |
+| recoveryFactor                  | 0.75                                                                                              |
+| taperFactor                     | 0.70                                                                                              |
+| longRunMaxShare                 | 0.50                                                                                              |
+| longRunStepMiles                | 1                                                                                                 |
+| painThreshold                   | 3 (placeholder: a number above 3, or any pain that changes how I run, counts as a step-back week) |
 
 ## 4. Outputs
 
@@ -158,7 +158,7 @@ Other tests:
 
 ## 9. Open questions
 
-- Pain threshold: what number do I agree with my physio or doctor? (Placeholder idea: 3 out of 10.)
+- Pain threshold: self-managed for now, placeholder 3 out of 10. Check-ins record feel, body area, side and a 0 to 10 number per area; the gate only reads the highest number. Revisit if the pattern changes.
 - Peak weekly miles: default 22 for the 2:30 stretch (a typical beginner half plan peaks around 20 to 25). What do I set for a finish-healthy goal?
 - Placeholder start: the 19-week calendar assumes a 10-mile week 1. Replace it with what the November 9 baseline supports.
 - No separate prep weeks any more: a low baseline just shrinks the curve. Is that enough protection for the knee, or do I want an extra pain gate for weeks 1 to 4?
