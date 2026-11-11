@@ -9,7 +9,7 @@
  * - Exact halves round up (4.25 gives 4.3), the same as Math.round.
  * - Throw a RangeError for NaN or Infinity.
  *
- * Tests: rounding.test.ts. Write them first.
+ * Tests: rounding.test.ts.
  * Status: done.
  */
 

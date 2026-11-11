@@ -1,45 +1,58 @@
 /**
- * dates.ts: date helpers, counted from the plan start.
- *
- * What it does: answers "which training week is this date in?" and "when does
- * week N start?" for a plan that begins Monday, Nov 9, 2026 and ends on race
- * day, Sunday, March 21, 2027.
- *
- * Decision to confirm: dates are ISO strings ('2026-11-09'), not Date
- * objects. Parse and format them in UTC so a daylight-saving change (the
- * clocks move on March 14, 2027, inside the plan) cannot shift a week.
+ * Decisions: dates are ISO strings ('2026-11-09'), not Date objects. All
+ * math is in UTC so a daylight-saving change (the clocks move on March 14,
+ * 2027, inside the plan) cannot shift a week.
  *
  * Functions
  * - weekIndexForDate(date, planStart): 1-based week number. Nov 9 to Nov 15
- *   is week 1. Decide what a date before the start or after week 19 returns
- *   (throw, or null) and write it in the test.
+ *   is week 1. Throws a RangeError for a date before the start. It does not
+ *   know the plan length, so checking for "after week 19" is the caller's job.
  * - weekStartDate(weekIndex, planStart): the Monday that week begins.
  *   Week 19 starts '2027-03-15'.
  * - daysUntilRace(date, raceDate): whole days left. From '2026-11-10' to
  *   '2027-03-21' is 131.
  *
- * Tests: dates.test.ts. Write them first.
- * Status: stubs, throw until implemented.
+ * Tests: dates.test.ts.
+ * Status: done.
  */
 import type { IsoDate } from './types'
 
-export const weekIndexForDate: (
-  date: IsoDate,
-  planStart: IsoDate,
-) => number = () => {
-  throw new Error('weekIndexForDate: not implemented')
+const MS_PER_DAY = 86_400_000
+
+const toDayNumber = (date: IsoDate): number => {
+  const [year, month, day] = date.split('-').map(Number)
+  return Date.UTC(year, month - 1, day) / MS_PER_DAY
+}
+
+export const weekIndexForDate: (date: IsoDate, planStart: IsoDate) => number = (
+  date,
+  planStart,
+) => {
+  const daysSinceStart = toDayNumber(date) - toDayNumber(planStart)
+  if (daysSinceStart < 0) {
+    throw new RangeError(
+      `weekIndexForDate: ${date} is before the plan start ${planStart}`,
+    )
+  }
+  return Math.floor(daysSinceStart / 7) + 1
 }
 
 export const weekStartDate: (
   weekIndex: number,
   planStart: IsoDate,
-) => IsoDate = () => {
-  throw new Error('weekStartDate: not implemented')
+) => IsoDate = (weekIndex, planStart) => {
+  const dayNumber = toDayNumber(planStart) + (weekIndex - 1) * 7
+  if (weekIndex < 1) {
+    throw new RangeError(
+      `weekStartDate: ${weekIndex} is before the plan start ${planStart}`,
+    )
+  }
+  return new Date(dayNumber * MS_PER_DAY).toISOString().slice(0, 10)
 }
 
-export const daysUntilRace: (
-  date: IsoDate,
-  raceDate: IsoDate,
-) => number = () => {
-  throw new Error('daysUntilRace: not implemented')
+export const daysUntilRace: (date: IsoDate, raceDate: IsoDate) => number = (
+  date,
+  raceDate,
+) => {
+  return toDayNumber(raceDate) - toDayNumber(date)
 }
