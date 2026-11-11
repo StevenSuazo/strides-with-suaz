@@ -12,13 +12,15 @@
  * - Everything else is build.
  * - Write it so it still works for a different totalWeeks (a plan with
  *   fewer weeks left), not only 19.
+ * - Priority when rules overlap: race, taper, recovery, peak, build. (In a
+ *   12-week plan, week 12 is both a multiple of 4 and race week: race wins.)
  *
  * Functions
  * - getWeekKind(weekIndex, totalWeeks, config?) returns a WeekKind.
  * - isRecoveryWeek(weekIndex, config?) uses config.recoveryEvery.
  *
- * Tests: weekStructure.test.ts. Write them first.
- * Status: stubs, throw until implemented.
+ * Tests: weekStructure.test.ts.
+ * Status: done.
  */
 import type { Config, WeekKind } from './types'
 import { DEFAULT_CONFIG } from './config'
