@@ -10,18 +10,35 @@
  * - After a recovery week the caller passes the long run from the week before
  *   it, so this function does not need to know about recovery weeks.
  * - Returns miles rounded with roundMiles.
- * - Decide what happens when the 50% cap is below lastLongRun (a short week):
- *   probably the cap wins. Write the decision in the test.
+ * - When the 50% cap is below lastLongRun (a short week), the cap wins, so
+ *   the long run can shrink. The share is a safety limit, not a target.
  *
- * Tests: longRun.test.ts. Write them first.
- * Status: stub, throws until implemented.
+ * Tests: longRun.test.ts.
+ * Status: done.
  */
+import { DEFAULT_CONFIG } from './config'
+import { roundMiles } from './rounding'
 import type { Config } from './types'
+
+const assertValidMiles = (name: string, value: number): void => {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new RangeError(
+      `nextLongRun: ${name} must be a finite number of miles, 0 or more, got ${value}`,
+    )
+  }
+}
 
 export const nextLongRun: (
   lastLongRun: number,
   weekMiles: number,
   config?: Config,
-) => number = () => {
-  throw new Error('nextLongRun: not implemented')
+) => number = (lastLongRun, weekMiles, config = DEFAULT_CONFIG) => {
+  assertValidMiles('lastLongRun', lastLongRun)
+  assertValidMiles('weekMiles', weekMiles)
+
+  const stepped = lastLongRun + config.longRunStepMiles
+  const cap = weekMiles * config.longRunMaxShare
+
+  // The cap wins even when it is below lastLongRun (a short week).
+  return roundMiles(Math.min(stepped, cap))
 }
