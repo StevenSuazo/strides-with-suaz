@@ -12,27 +12,47 @@
  * - Everything else is build.
  * - Write it so it still works for a different totalWeeks (a plan with
  *   fewer weeks left), not only 19.
+ * - Priority when rules overlap: race, taper, recovery, peak, build. (In a
+ *   12-week plan, week 12 is both a multiple of 4 and race week: race wins.)
  *
  * Functions
  * - getWeekKind(weekIndex, totalWeeks, config?) returns a WeekKind.
  * - isRecoveryWeek(weekIndex, config?) uses config.recoveryEvery.
  *
- * Tests: weekStructure.test.ts. Write them first.
- * Status: stubs, throw until implemented.
+ * Tests: weekStructure.test.ts.
+ * Status: done.
  */
 import type { Config, WeekKind } from './types'
+import { DEFAULT_CONFIG } from './config'
+
+const peakWeeks = (totalWeeks: number, config: Config): number[] => {
+  const peaks: number[] = []
+  for (let week = totalWeeks - 2; week >= 1 && peaks.length < 2; week--) {
+    if (!isRecoveryWeek(week, config)) peaks.push(week)
+  }
+  return peaks
+}
 
 export const getWeekKind: (
   weekIndex: number,
   totalWeeks: number,
   config?: Config,
-) => WeekKind = () => {
-  throw new Error('getWeekKind: not implemented')
+) => WeekKind = (weekIndex, totalWeeks, config = DEFAULT_CONFIG) => {
+  if (weekIndex < 1 || weekIndex > totalWeeks) {
+    throw new RangeError(
+      `getWeekKind: week ${weekIndex} is outside 1 to ${totalWeeks}`,
+    )
+  }
+  if (weekIndex === totalWeeks) return 'race'
+  if (weekIndex === totalWeeks - 1) return 'taper'
+  if (isRecoveryWeek(weekIndex, config)) return 'recovery'
+  if (peakWeeks(totalWeeks, config).includes(weekIndex)) return 'peak'
+  return 'build'
 }
 
-export const isRecoveryWeek: (
-  weekIndex: number,
-  config?: Config,
-) => boolean = () => {
-  throw new Error('isRecoveryWeek: not implemented')
+export const isRecoveryWeek: (weekIndex: number, config?: Config) => boolean = (
+  weekIndex,
+  config = DEFAULT_CONFIG,
+) => {
+  return weekIndex % config.recoveryEvery === 0
 }
