@@ -83,6 +83,7 @@ export type Config = {
   longRunStepMiles: number
   easyRunMaxShare: number // no easy run over this share of the week
   minRunsPerWeek: number
+  goalOnTrackShare: number // reachable peak needed, as a share of the goal peak
 }
 
 // ---- Scheduling ---------------------------------------------------------

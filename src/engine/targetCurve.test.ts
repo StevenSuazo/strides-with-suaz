@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_CONFIG } from './config'
-import { buildTargetCurve, reachablePeak } from './targetCurve'
+import { buildTargetCurve, reachableFrom, reachablePeak } from './targetCurve'
 import { isRecoveryWeek } from './weekStructure'
 
 const example = (): number[] => buildTargetCurve(10, 22, 19)
@@ -178,5 +178,37 @@ describe('reachablePeak', () => {
     expect(() => reachablePeak(8, 0)).toThrow(RangeError)
     expect(() => reachablePeak(8, 1.5)).toThrow(RangeError)
     expect(() => reachablePeak(8, NaN)).toThrow(RangeError)
+  })
+})
+
+describe('reachableFrom', () => {
+  it('matches reachablePeak when starting from week 1', () => {
+    expect(reachableFrom(8, 1, 15)).toBe(22.8)
+    expect(reachableFrom(5, 1, 15)).toBe(reachablePeak(5, 15))
+  })
+
+  it('counts only the steps between the two weeks', () => {
+    expect(reachableFrom(10.5, 5, 15)).toBe(22.5)
+  })
+
+  it('returns the same miles when toWeek is not after fromWeek', () => {
+    expect(reachableFrom(8, 5, 5)).toBe(8)
+    expect(reachableFrom(8, 10, 5)).toBe(8)
+  })
+
+  it('treats a recovery fromWeek as the up week before it', () => {
+    expect(reachableFrom(8, 4, 15)).toBe(reachableFrom(8, 3, 15))
+  })
+
+  it('uses the step size and recovery spacing from a custom config', () => {
+    const config = { ...DEFAULT_CONFIG, normalStep: 0.05, recoveryEvery: 3 }
+    expect(reachableFrom(10, 1, 7, config)).toBe(reachablePeak(10, 7, config))
+  })
+
+  it('throws a RangeError for bad miles or weeks', () => {
+    expect(() => reachableFrom(-1, 1, 15)).toThrow(RangeError)
+    expect(() => reachableFrom(NaN, 1, 15)).toThrow(RangeError)
+    expect(() => reachableFrom(8, 0, 15)).toThrow(RangeError)
+    expect(() => reachableFrom(8, 1, 1.5)).toThrow(RangeError)
   })
 })

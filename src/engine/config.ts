@@ -30,4 +30,5 @@ export const DEFAULT_CONFIG: Config = {
   longRunStepMiles: 1,
   easyRunMaxShare: 0.4,
   minRunsPerWeek: 3,
+  goalOnTrackShare: 0.9,
 }
