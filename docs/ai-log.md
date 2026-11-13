@@ -85,3 +85,62 @@
   not just `prettier --write src/engine`.
 - Read the test output closely: counts, labels and "todo" numbers showed me
   two mistakes (a missing branch and a misplaced test) before CI did.
+
+## 2026-11-12: targetCurve
+
+**What I built**
+
+- `reachablePeak(startMiles, weeks)`: the highest weekly miles the +10% cap
+  can reach, with a 0.5 mile minimum step. 7 tests.
+- `buildTargetCurve(startMiles, peakMiles, totalWeeks)`: one target per week,
+  with recovery weeks, the peak in weeks 15 and 17, the taper, and race week.
+  15 tests.
+
+**How I used AI**
+
+- Claude planned the file with real numbers before any code: the 19-week
+  staircase for an 8-mile start, and a table of the highest peak each
+  starting mileage can reach (10 miles gives 28.5, 8 gives 22.8, 5 gives 14.3,
+  4 gives 11.8).
+- [Say what you did yourself here: for example, "I wrote the code and the
+  tests, then Claude reviewed them", or which parts came from a suggestion.]
+- Claude reviewed the finished file by running it and the tests, not just by
+  reading it.
+
+**Decisions I made**
+
+- The minimum step (0.5 mile) is a floor on the cap, not a forced step. Each
+  step may add up to the larger of 10% and 0.5 mile.
+- The curve is solved as a fraction (0 to 1) of the allowed step, found by
+  repeatedly halving the range. It works from a start of 0, and the cap can
+  never be broken. [Note whether this was your idea or a suggestion.]
+- If the cap can't reach the requested peak, the peak is lowered to what it
+  can reach, and `goalCheck` will report the gap.
+- Race week is a fixed `raceWeekMiles` (8).
+
+**What went wrong**
+
+- `format:check` failed on trailing spaces in the test file. I only ran
+  Prettier on `src/engine` earlier, and CI checks the whole repo.
+- Edits to `longRun.ts` and its tests were sitting uncommitted on my
+  `feat/target-curve` branch. They were left over from the previous branch,
+  and `git status` showed them before I committed. They belong in their own
+  change.
+- A test slack Claude suggested (0.05 mile) was too tight. Both weeks are
+  rounded, so the error can reach 0.1, and my `0.1` was correct.
+- Race week can be bigger than the taper week for low starting miles. From a
+  start of 2, the last weeks come out as 8.1, 6, 8.1, 5.6, 8. It doesn't
+  matter for my real start of 4, but I noticed it in review, not while
+  writing the tests.
+
+**What I learned**
+
+- Check `git status` before committing. Uncommitted edits follow you when you
+  switch branches.
+- A planned algorithm isn't always the best one. The fraction-of-step idea
+  handled a start of 0, which a constant growth ratio can't.
+- Hand-check test numbers against an independent calculation. The curve for my
+  own start of 4 is 4, 4.5, 5, 3.8, 5.5 ... 11.8 at the peak, and it can't
+  reach the 22-mile target.
+- A realistic test case (my real start) is worth having next to the edge
+  cases.
