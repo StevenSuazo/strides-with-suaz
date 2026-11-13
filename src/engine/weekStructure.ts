@@ -1,26 +1,16 @@
 /**
  * weekStructure.ts: says what kind of week each week is.
  *
- * What it does: keeps the "which weeks are recovery, peak, taper, or race"
- * logic out of the curve builder, so it is not tangled inside it.
- *
- * Rules (for the 19-week plan)
- * - Every 4th week is recovery: weeks 4, 8, 12, 16.
- * - The last week is race week (19). The week before it is taper (18).
- * - Peak weeks are the last two non-recovery weeks before the taper: weeks 15
- *   and 17 (16 is a recovery week between them).
+ * - Every 4th week is recovery (config.recoveryEvery).
+ * - The last week is race, and the week before it is taper.
+ * - Peak weeks are the last two non-recovery weeks before the taper. In the
+ *   19-week plan that is weeks 15 and 17, with recovery week 16 between them.
  * - Everything else is build.
- * - Write it so it still works for a different totalWeeks (a plan with
- *   fewer weeks left), not only 19.
- * - Priority when rules overlap: race, taper, recovery, peak, build. (In a
- *   12-week plan, week 12 is both a multiple of 4 and race week: race wins.)
+ * - When rules overlap the order is race, taper, recovery, peak, build. In a
+ *   12-week plan, week 12 is a multiple of 4 and race week: race wins.
+ * - A week outside 1 to totalWeeks throws a RangeError.
  *
- * Functions
- * - getWeekKind(weekIndex, totalWeeks, config?) returns a WeekKind.
- * - isRecoveryWeek(weekIndex, config?) uses config.recoveryEvery.
- *
- * Tests: weekStructure.test.ts.
- * Status: done.
+ * Works for any totalWeeks, not only 19.
  */
 import type { Config, WeekKind } from './types'
 import { DEFAULT_CONFIG } from './config'

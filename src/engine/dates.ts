@@ -1,19 +1,15 @@
 /**
- * Decisions: dates are ISO strings ('2026-11-09'), not Date objects. All
- * math is in UTC so a daylight-saving change (the clocks move on March 14,
- * 2027, inside the plan) cannot shift a week.
+ * dates.ts: date helpers, counted from the plan start.
  *
- * Functions
- * - weekIndexForDate(date, planStart): 1-based week number. Nov 9 to Nov 15
- *   is week 1. Throws a RangeError for a date before the start. It does not
- *   know the plan length, so checking for "after week 19" is the caller's job.
- * - weekStartDate(weekIndex, planStart): the Monday that week begins.
- *   Week 19 starts '2027-03-15'.
- * - daysUntilRace(date, raceDate): whole days left. From '2026-11-10' to
- *   '2027-03-21' is 131.
+ * Dates are ISO strings ('2026-11-09'), and all math is in UTC so a
+ * daylight-saving change (March 14, 2027, inside the plan) cannot shift a week.
  *
- * Tests: dates.test.ts.
- * Status: done.
+ * - weekIndexForDate(date, planStart): 1-based week number. Throws a
+ *   RangeError before the start. Checking "after the last week" is the
+ *   caller's job.
+ * - weekStartDate(weekIndex, planStart): the Monday that week begins. Throws a
+ *   RangeError below week 1.
+ * - daysUntilRace(date, raceDate): whole days left.
  */
 import type { IsoDate } from './types'
 
