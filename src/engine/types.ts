@@ -56,6 +56,7 @@ export type GateResult = {
   decision: Decision
   reducedMode: boolean
   reason: string // plain English, shown in the UI
+  state: GateState // pass this back in next week
 }
 
 export type GoalCheck = {
