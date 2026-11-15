@@ -46,6 +46,7 @@ Config, with defaults I can tune:
 | taperFactor                     | 0.70                                                                                              |
 | longRunMaxShare                 | 0.50                                                                                              |
 | longRunStepMiles                | 1                                                                                                 |
+| goalOnTrackShare                | 0.90 (the reachable peak must be at least this share of the goal peak)                            |
 | painThreshold                   | 3 (placeholder: a number above 3, or any pain that changes how I run, counts as a step-back week) |
 
 ## 4. Outputs
@@ -65,11 +66,12 @@ type GateResult = {
   decision: Decision
   reducedMode: boolean // true while progression is +5% instead of +10%
   reason: string // plain English, shown in the UI
+  state: GateState // pass this back in next week
 }
 
 type GoalCheck = {
   onTrack: boolean
-  gapMiles: number // curve target minus what the capped path can reach
+  gapMiles: number // goal peak minus what the capped path can reach, never negative
   reachablePeakMiles: number
 }
 ```
@@ -77,9 +79,10 @@ type GoalCheck = {
 Functions to write:
 
 - `buildTargetCurve(startMiles, peakMiles, weeks): number[]`
-- `reachablePeak(startMiles, weeks, config): number` (what the +10% cap allows)
+- `reachablePeak(startMiles, weeks, config): number` (what the +10% cap allows; same as `reachableFrom(startMiles, 1, weeks)`)
 - `gate(lastWeek, curve, state, config): GateResult`
-- `goalCheck(curve, actuals, config): GoalCheck`
+- `reachableFrom(miles, fromWeek, toWeek, config): number` (what the +10% cap allows between two weeks)
+- `goalCheck(goalPeakMiles, curve, actuals, config): GoalCheck`
 
 ## 5. How it works
 
@@ -92,20 +95,22 @@ Target curve (built once, rebuilt if the plan changes):
 
 Weekly gate, using `ratio = actual / target`:
 
-| Ratio         | Pain                  | Decision     | Next target                                                                 |
-| ------------- | --------------------- | ------------ | --------------------------------------------------------------------------- |
-| 0.90 or more  | at or under threshold | advance      | min(curve next, max(actual × 1.10, actual + 0.5))                           |
-| 0.80 to 0.90  | at or under           | repeat       | same target                                                                 |
-| under 0.80    | any                   | stepBack     | actual miles; reduced mode on (+5%)                                         |
-| any           | over threshold        | stepBack     | 0.70 × this week's target; long run does not grow; reduced mode on          |
-| recovery week | n/a                   | recovery     | 0.75 × previous week; next advance starts from the week before the recovery |
-| taper / race  | n/a                   | taper / race | fixed fractions of peak, no gate                                            |
+| Ratio         | Pain                  | Decision     | Next target                                                        |
+| ------------- | --------------------- | ------------ | ------------------------------------------------------------------ |
+| 0.90 or more  | at or under threshold | advance      | min(curve next, max(actual × 1.10, actual + 0.5))                  |
+| 0.80 to 0.90  | at or under           | repeat       | same target                                                        |
+| under 0.80    | any                   | stepBack     | actual miles, but at least 0.70 × target; reduced mode on (+5%)    |
+| any           | over threshold        | stepBack     | 0.70 × this week's target; long run does not grow; reduced mode on |
+| recovery week | n/a                   | recovery     | 0.75 × the lower of last week's target and actual; no gate         |
+| taper / race  | n/a                   | taper / race | fixed fractions of peak, no gate                                   |
 
-Reduced mode turns off after two weeks in a row with ratio at or above 0.90.
+Reduced mode turns off after two weeks in a row with ratio at or above 0.90. The ratio is rounded to 9 decimals before comparing, so exactly 90% (8.1 of 9) counts as advance.
+
+The week before a recovery week is judged after the recovery week, using the worse pain of the two. The recovery week itself never counts as a good or bad week, and the long run resumes from the last non-recovery long run.
 
 Long run: next long run is at most the last non-recovery long run + 1 mile, and at most 50% of next week's miles.
 
-Goal check: simulate the capped path from the current week to the peak week. If the reachable peak is less than about 90% of the curve's peak, report `onTrack: false` with the gap in miles.
+Goal check: `goalCheck` takes the goal peak as its own argument, because `buildTargetCurve` already lowers a peak the cap cannot reach, so the curve alone would always look on track. It simulates the capped path with `reachableFrom`, from the latest finished non-recovery week to the peak week (from week 1 at the curve's first target if nothing is finished). If the reachable peak is less than `goalOnTrackShare` of the goal peak, it reports `onTrack: false` with the gap in miles.
 
 ## 6. Edge cases
 

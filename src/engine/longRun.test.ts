@@ -24,7 +24,9 @@ describe('nextLongRun', () => {
   })
 
   it('removes floating-point noise from the step', () => {
-    expect(nextLongRun(0.1, 20)).toBe(1.1)
+    const config = { ...DEFAULT_CONFIG, longRunStepMiles: 0.2 }
+    expect(0.1 + 0.2).not.toBe(0.3)
+    expect(nextLongRun(0.1, 20, config)).toBe(0.3)
   })
 
   it('starts from 0 when there is no last long run', () => {
