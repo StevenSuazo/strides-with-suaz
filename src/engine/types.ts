@@ -86,6 +86,7 @@ export type Config = {
   minRunsPerWeek: number
   morningMaxMiles: number // longest run on a morning-only day
   minRunMiles: number // easy runs shorter than this get dropped from a small week
+  swapMatchShare: number // a run one day off still matches if within this share of the planned miles
   goalOnTrackShare: number // reachable peak needed, as a share of the goal peak
 }
 

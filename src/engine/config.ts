@@ -32,5 +32,6 @@ export const DEFAULT_CONFIG: Config = {
   minRunsPerWeek: 3,
   morningMaxMiles: 6,
   minRunMiles: 2,
+  swapMatchShare: 0.25,
   goalOnTrackShare: 0.9,
 }

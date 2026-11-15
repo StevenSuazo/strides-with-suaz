@@ -51,6 +51,7 @@ Config, with defaults I can tune:
 | minRunsPerWeek                  | 3                                                                                                 |
 | morningMaxMiles                 | 6 (longest run on a morning-only day, about an hour of running)                                   |
 | minRunMiles                     | 2 (an easy run shorter than this is dropped, so a small week uses fewer runs)                     |
+| swapMatchShare                  | 0.25 (a run one day off a workout still matches if within this share of the planned miles)        |
 | painThreshold                   | 3 (placeholder: a number above 3, or any pain that changes how I run, counts as a step-back week) |
 
 ## 4. Outputs
