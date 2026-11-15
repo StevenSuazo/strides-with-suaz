@@ -47,6 +47,10 @@ Config, with defaults I can tune:
 | longRunMaxShare                 | 0.50                                                                                              |
 | longRunStepMiles                | 1                                                                                                 |
 | goalOnTrackShare                | 0.90 (the reachable peak must be at least this share of the goal peak)                            |
+| easyRunMaxShare                 | 0.40 (no easy run over this share of the week)                                                    |
+| minRunsPerWeek                  | 3                                                                                                 |
+| morningMaxMiles                 | 6 (longest run on a morning-only day, about an hour of running)                                   |
+| minRunMiles                     | 2 (an easy run shorter than this is dropped, so a small week uses fewer runs)                     |
 | painThreshold                   | 3 (placeholder: a number above 3, or any pain that changes how I run, counts as a step-back week) |
 
 ## 4. Outputs
