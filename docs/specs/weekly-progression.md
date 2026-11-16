@@ -32,6 +32,8 @@ Unit decision: weekly volume is stored in **miles**. It matches Strava's distanc
 | Last week: actual miles                 | `number`          | miles   | 0 or more                                                      |
 | Last week: highest check-in pain number | `number`          | 0 to 10 | integer, highest across all body areas and check-ins that week |
 
+This plan's values: race Sunday March 21, 2027; start Monday Nov 9, 2026; 19 weeks; week 1 target 8.5 miles (week 1 actual was 8.56: 2.05 + 2.50 + 4.01, long run 4.01, pain 0); peak 22 (a 20 to 22 range, default 22); 2:30 is the stretch goal and finishing healthy comes first.
+
 Config, with defaults I can tune:
 
 | Setting                         | Default                                                                                           |
@@ -143,6 +145,7 @@ Gate examples:
 | 10     | 7.0    | low  | 12         | stepBack, next 7.0, reduced mode on            |
 | 10     | 10     | high | 12         | stepBack, next 7.0                             |
 | 4      | 4      | low  | 6          | advance, next 4.5 (minimum step)               |
+| 8.5    | 8.56   | low  | 9.3        | advance, next 9.3 (week 1 of this plan)        |
 
 Curve and goal check:
 
@@ -151,6 +154,7 @@ Curve and goal check:
 - [ ] After a recovery week, advance starts from the week before it
 - [ ] `reachablePeak(8, 15 weeks)` is about 22.8 and `reachablePeak(5, 15 weeks)` is about 14.3 (11 steps of +10%; verify by hand in the test comments)
 - [ ] A 22-mile peak from an 8-mile start gives `onTrack: true`; from 5 miles it gives `onTrack: false`
+- [ ] From this plan's 8.5-mile start, `reachablePeak(8.5, 15 weeks)` is 24.3 and the 22-mile goal is `onTrack: true`; from a 4-mile start it would reach only 11.8 and report a 10.2-mile gap
 
 Other tests:
 
@@ -169,7 +173,11 @@ Other tests:
 ## 9. Open questions
 
 - Pain threshold: self-managed for now, placeholder 3 out of 10. Check-ins record feel, body area, side and a 0 to 10 number per area; the gate only reads the highest number. Revisit if the pattern changes.
-- Peak weekly miles: default 22 for the 2:30 stretch (a typical beginner half plan peaks around 20 to 25). What do I set for a finish-healthy goal?
-- Placeholder start: the 19-week calendar assumes a 10-mile week 1. Replace it with what the November 9 baseline supports.
-- No separate prep weeks any more: a low baseline just shrinks the curve. Is that enough protection for the knee, or do I want an extra pain gate for weeks 1 to 4?
 - Should `reason` strings live in the engine or the UI layer?
+
+## 10. Decisions
+
+- Peak weekly miles: aim for 20 to 22, default 22. From the 8.5-mile start the +10% cap reaches 24.3 by week 15, so the goal is inside it.
+- Start: week 1 target 8.5 miles, which also tested the knee. The 10-mile placeholder is gone. The curve builds from the real baseline.
+- Goal: 2:30 stays as the stretch. Finishing healthy comes first. The goal check only reports; I decide whether to dial back.
+- Knee: the pain gate stays as it is, with no extra gate for weeks 1 to 4. Revisit if pain shows up.
