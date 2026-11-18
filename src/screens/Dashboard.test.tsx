@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { StorageProvider } from '../storage/StorageProvider'
@@ -140,5 +140,62 @@ describe('Dashboard: runs', () => {
     const [week] = await storage.getWeekResults()
     expect(week.weekIndex).toBe(1)
     expect(week.actualMiles).toBe(5.55)
+  })
+})
+
+describe('Dashboard: check-ins', () => {
+  it('lists saved check-ins', async () => {
+    const storage = await seededStorage()
+    await storage.saveCheckIn({
+      id: 'c1',
+      date: '2026-11-15',
+      feel: 'good',
+      kind: 'afterRun',
+      entries: [],
+    })
+    show(storage)
+    expect(
+      await screen.findByText('2026-11-15: after a run, felt good, no pain.'),
+    ).toBeInTheDocument()
+  })
+
+  it('saves a check-in, and high pain steps the plan back', async () => {
+    const storage = await seededStorage()
+    const user = show(storage)
+    await screen.findByText('Target: 9.3 miles')
+    fireEvent.change(screen.getByLabelText('Check-in date'), {
+      target: { value: '2026-11-15' },
+    })
+    await user.click(screen.getByRole('button', { name: 'Add a sore spot' }))
+    await user.selectOptions(screen.getByLabelText('Pain 1'), '8')
+    await user.click(screen.getByRole('button', { name: 'Save check-in' }))
+    await waitFor(() =>
+      expect(screen.queryByText('Target: 9.3 miles')).not.toBeInTheDocument(),
+    )
+    expect(await storage.getCheckIns()).toHaveLength(1)
+    const [week] = await storage.getWeekResults()
+    expect(week.highestPain).toBe(8)
+  })
+
+  it('deletes a check-in after confirming', async () => {
+    const storage = await seededStorage()
+    await storage.saveCheckIn({
+      id: 'c1',
+      date: '2026-11-15',
+      feel: 'rough',
+      kind: 'afterRun',
+      entries: [{ area: 'knee', side: 'left', pain: 8 }],
+    })
+    const user = show(storage)
+    await screen.findByText('Week 2 of 19')
+    await user.click(
+      screen.getByRole('button', { name: 'Delete 2026-11-15 check-in' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
+    expect(await screen.findByText('No check-ins yet.')).toBeInTheDocument()
+    expect(await storage.getCheckIns()).toEqual([])
+    await waitFor(() =>
+      expect(screen.getByText('Target: 9.3 miles')).toBeInTheDocument(),
+    )
   })
 })

@@ -41,6 +41,7 @@ export type AppStorage = {
 
   getCheckIns: () => Promise<CheckIn[]>
   saveCheckIn: (checkIn: CheckIn) => Promise<void>
+  deleteCheckIn: (id: string) => Promise<void> // a missing id does nothing
 
   getOverrides: () => Promise<Overrides>
   saveOverride: (runId: string, workoutId: string) => Promise<void>

@@ -390,6 +390,22 @@ describe('check-ins', () => {
     expect(await storage.getCheckIns()).toHaveLength(1)
   })
 
+  it('deletes a check-in and keeps the others', async () => {
+    const storage = createMemoryStorage()
+    await storage.saveCheckIn(checkIn('a', '2026-11-10'))
+    await storage.saveCheckIn(checkIn('b', '2026-11-12'))
+    await storage.deleteCheckIn('a')
+    const ids = (await storage.getCheckIns()).map((saved) => saved.id)
+    expect(ids).toEqual(['b'])
+  })
+
+  it('does nothing when deleting a check-in that is not there', async () => {
+    const storage = createMemoryStorage()
+    await storage.saveCheckIn(checkIn('a', '2026-11-10'))
+    await storage.deleteCheckIn('missing')
+    expect(await storage.getCheckIns()).toHaveLength(1)
+  })
+
   it('rejects an entry pain outside 0 to 10 or fractional', async () => {
     const storage = createMemoryStorage()
     const entry = (pain: number) => [
