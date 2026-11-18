@@ -8,6 +8,10 @@ import { createSupabaseAuth } from './auth/supabase'
 
 const auth = createSupabaseAuth()
 
+if (import.meta.env.DEV) {
+  void import('./devTools').then((tools) => tools.installDevTools())
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider auth={auth}>

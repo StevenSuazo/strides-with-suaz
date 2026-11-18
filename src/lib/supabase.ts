@@ -1,9 +1,10 @@
 // The one shared Supabase client for the whole app.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from './database.types'
 
-let client: SupabaseClient | undefined
+let client: SupabaseClient<Database> | undefined
 
-export function getSupabase(): SupabaseClient {
+export function getSupabase(): SupabaseClient<Database> {
   if (client) return client
 
   const url = import.meta.env.VITE_SUPABASE_URL
@@ -14,6 +15,6 @@ export function getSupabase(): SupabaseClient {
     )
   }
 
-  client = createClient(url, key)
+  client = createClient<Database>(url, key)
   return client
 }
