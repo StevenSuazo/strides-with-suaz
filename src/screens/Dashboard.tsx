@@ -10,6 +10,7 @@ import { useState } from 'react'
 import type { CheckIn, IsoDate, Run } from '../engine/types'
 import { usePlan } from '../plan/usePlan'
 import { useStorage } from '../storage/useStorage'
+import { BackupButton } from './BackupButton'
 import { CheckInForm } from './CheckInForm'
 import { CheckInList } from './CheckInList'
 import { LogRunForm } from './LogRunForm'
@@ -75,6 +76,10 @@ export const Dashboard = ({
         <h2>Check-ins</h2>
         <CheckInForm today={today} newId={newId} onSave={saveCheckIn} />
         <CheckInList checkIns={state.checkIns} onDelete={removeCheckIn} />
+      </section>
+      <section>
+        <h2>Backup</h2>
+        <BackupButton today={today} />
       </section>
     </>
   )
