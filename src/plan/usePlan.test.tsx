@@ -38,6 +38,16 @@ describe('usePlan', () => {
     expect(view(result).target?.targetMiles).toBe(9.3)
   })
 
+  it('also returns the runs and check-ins it loaded', async () => {
+    const storage = await seededStorage()
+    const { result } = setup(storage)
+    await waitFor(() => expect(isReady(result)).toBe(true))
+    const { state } = result.current
+    if (state.status !== 'ready') throw new Error('not ready yet')
+    expect(state.runs).toEqual(weekOneRuns)
+    expect(state.checkIns).toEqual([])
+  })
+
   it('saves an ended week that was never saved', async () => {
     const storage = emptyStorage()
     for (const run of weekOneRuns) await storage.saveRun(run)

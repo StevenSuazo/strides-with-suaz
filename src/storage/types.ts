@@ -37,6 +37,7 @@ export type AppStorage = {
 
   getRuns: () => Promise<Run[]>
   saveRun: (run: Run) => Promise<void>
+  deleteRun: (id: string) => Promise<void> // a missing id does nothing
 
   getCheckIns: () => Promise<CheckIn[]>
   saveCheckIn: (checkIn: CheckIn) => Promise<void>
