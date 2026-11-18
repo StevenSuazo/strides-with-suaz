@@ -1,15 +1,17 @@
 /**
  * Dashboard.tsx: the main page. This week, plus logging and fixing runs.
  *
- * Loads the plan once with usePlan and shares it with the pieces below. After
- * any save or delete it reloads, so the week's numbers (and next week's
+ * Loads the plan once with usePlan and shares it with the pieces below: runs
+ * and check-ins, each with a form and a list. After any save or delete it reloads, so the week's numbers (and next week's
  * target) follow your runs. Editing a run swaps the form into edit mode.
  * newId makes ids for new runs and can be replaced in tests.
  */
 import { useState } from 'react'
-import type { IsoDate, Run } from '../engine/types'
+import type { CheckIn, IsoDate, Run } from '../engine/types'
 import { usePlan } from '../plan/usePlan'
 import { useStorage } from '../storage/useStorage'
+import { CheckInForm } from './CheckInForm'
+import { CheckInList } from './CheckInList'
 import { LogRunForm } from './LogRunForm'
 import { RunList } from './RunList'
 import { ThisWeek } from './ThisWeek'
@@ -44,6 +46,16 @@ export const Dashboard = ({
     reload()
   }
 
+  const saveCheckIn = async (checkIn: CheckIn) => {
+    await storage.saveCheckIn(checkIn)
+    reload()
+  }
+
+  const removeCheckIn = async (id: string) => {
+    await storage.deleteCheckIn(id)
+    reload()
+  }
+
   return (
     <>
       <ThisWeek view={state.view} today={today} />
@@ -58,6 +70,11 @@ export const Dashboard = ({
           onCancel={() => setEditing(undefined)}
         />
         <RunList runs={state.runs} onEdit={setEditing} onDelete={remove} />
+      </section>
+      <section>
+        <h2>Check-ins</h2>
+        <CheckInForm today={today} newId={newId} onSave={saveCheckIn} />
+        <CheckInList checkIns={state.checkIns} onDelete={removeCheckIn} />
       </section>
     </>
   )

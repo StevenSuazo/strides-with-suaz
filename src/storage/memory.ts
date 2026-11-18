@@ -78,6 +78,9 @@ export const createMemoryStorage: () => AppStorage = () => {
       checkCheckIn(checkIn)
       checkIns.set(checkIn.id, copy(checkIn))
     },
+    deleteCheckIn: async (id) => {
+      checkIns.delete(id)
+    },
 
     getOverrides: async () => copy(overrides),
     saveOverride: async (runId, workoutId) => {

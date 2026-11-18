@@ -133,6 +133,11 @@ export const createSupabaseStorage: (
     if (error) throw storageError(error)
   },
 
+  deleteCheckIn: async (id) => {
+    const { error } = await client.from('check_ins').delete().eq('id', id)
+    if (error) throw storageError(error)
+  },
+
   getOverrides: async () => {
     const { data, error } = await client.from('overrides').select('*')
     if (error) throw storageError(error)
