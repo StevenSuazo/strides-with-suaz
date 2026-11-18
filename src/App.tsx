@@ -1,35 +1,14 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import type { IsoDate } from './engine/types'
+import { todayIso } from './plan/today'
+import { ThisWeekPage } from './screens/ThisWeekPage'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function App({ today = todayIso() }: { today?: IsoDate }) {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>StridesWithSuaz</h1>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <main>
+      <h1>StridesWithSuaz</h1>
+      <ThisWeekPage today={today} />
+    </main>
   )
 }
 

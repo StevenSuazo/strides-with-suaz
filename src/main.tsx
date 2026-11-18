@@ -5,6 +5,7 @@ import App from './App.tsx'
 import { AuthProvider } from './auth/AuthProvider'
 import { LoginGate } from './auth/LoginGate'
 import { createSupabaseAuth } from './auth/supabase'
+import { SupabaseStorageProvider } from './storage/SupabaseStorageProvider'
 
 const auth = createSupabaseAuth()
 
@@ -16,7 +17,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider auth={auth}>
       <LoginGate>
-        <App />
+        <SupabaseStorageProvider>
+          <App />
+        </SupabaseStorageProvider>
       </LoginGate>
     </AuthProvider>
   </StrictMode>,
