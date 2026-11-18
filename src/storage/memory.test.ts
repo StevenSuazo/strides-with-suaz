@@ -296,6 +296,31 @@ describe('runs', () => {
     expect((await storage.getRuns())[0].miles).toBe(4)
   })
 
+  it('deletes a run and keeps the others', async () => {
+    const storage = createMemoryStorage()
+    await storage.saveRun(run('a', '2026-11-09'))
+    await storage.saveRun(run('b', '2026-11-11'))
+    await storage.deleteRun('a')
+    expect((await storage.getRuns()).map((saved) => saved.id)).toEqual(['b'])
+  })
+
+  it('does nothing when deleting a run that is not there', async () => {
+    const storage = createMemoryStorage()
+    await storage.saveRun(run('a', '2026-11-09'))
+    await storage.deleteRun('missing')
+    expect(await storage.getRuns()).toHaveLength(1)
+  })
+
+  it('lets a deleted id be saved again', async () => {
+    const storage = createMemoryStorage()
+    await storage.saveRun(run('a', '2026-11-09', { miles: 2 }))
+    await storage.deleteRun('a')
+    await storage.saveRun(run('a', '2026-11-09', { miles: 3 }))
+    expect(await storage.getRuns()).toEqual([
+      run('a', '2026-11-09', { miles: 3 }),
+    ])
+  })
+
   it('rejects a date that does not exist', async () => {
     const storage = createMemoryStorage()
     await expect(storage.saveRun(run('r1', '2026-02-30'))).rejects.toThrow(

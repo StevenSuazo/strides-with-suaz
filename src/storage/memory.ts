@@ -69,6 +69,9 @@ export const createMemoryStorage: () => AppStorage = () => {
       checkRun(run)
       runs.set(run.id, copy(run))
     },
+    deleteRun: async (id) => {
+      runs.delete(id)
+    },
 
     getCheckIns: async () => copy([...checkIns.values()].sort(byDateThenId)),
     saveCheckIn: async (checkIn) => {

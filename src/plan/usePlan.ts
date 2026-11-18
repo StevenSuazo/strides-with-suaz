@@ -2,8 +2,8 @@
  * usePlan.ts: loads your data and works out where the plan stands.
  *
  * usePlan(today): { state, reload }
- * - state is 'loading' until the first load, then 'ready' with a PlanView, or
- *   'error' with a message.
+ * - state is 'loading' until the first load, then 'ready' with a PlanView and
+ *   the runs and check-ins it was built from, or 'error' with a message.
  * - Each load reads runs, check-ins and saved weeks, runs computePlan, and
  *   saves any ended weeks that are new or changed. That is how weeks close
  *   themselves. Saving twice is harmless because saves replace by week.
@@ -11,14 +11,14 @@
  *   A reload keeps showing the old plan until the new one arrives.
  */
 import { useCallback, useEffect, useState } from 'react'
-import type { IsoDate } from '../engine/types'
+import type { CheckIn, IsoDate, Run } from '../engine/types'
 import { useStorage } from '../storage/useStorage'
 import { computePlan, type PlanView } from './progress'
 
 export type PlanState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; view: PlanView }
+  | { status: 'ready'; view: PlanView; runs: Run[]; checkIns: CheckIn[] }
 
 export const usePlan = (
   today: IsoDate,
@@ -40,7 +40,7 @@ export const usePlan = (
       await Promise.all(
         view.resultsToSave.map((result) => storage.saveWeekResult(result)),
       )
-      if (active) setState({ status: 'ready', view })
+      if (active) setState({ status: 'ready', view, runs, checkIns })
     }
 
     load().catch((error: unknown) => {

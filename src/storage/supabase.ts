@@ -111,6 +111,11 @@ export const createSupabaseStorage: (
     if (error) throw storageError(error)
   },
 
+  deleteRun: async (id) => {
+    const { error } = await client.from('runs').delete().eq('id', id)
+    if (error) throw storageError(error)
+  },
+
   getCheckIns: async () => {
     const { data, error } = await client
       .from('check_ins')
