@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { StorageProvider } from '../storage/StorageProvider'
 import type { AppStorage } from '../storage/types'
-import { seededStorage } from '../test/fixtures'
+import { emptyStorage, seededStorage } from '../test/fixtures'
 import { Dashboard } from './Dashboard'
 
 const show = (storage: AppStorage) => {
@@ -197,5 +197,94 @@ describe('Dashboard: check-ins', () => {
     await waitFor(() =>
       expect(screen.getByText('Target: 9.3 miles')).toBeInTheDocument(),
     )
+  })
+})
+
+describe('Dashboard: schedule', () => {
+  const renderIt = async () =>
+    render(
+      <StorageProvider storage={await seededStorage()}>
+        <Dashboard today="2026-11-17" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+
+  it('plans this week from the default all-open availability', async () => {
+    await renderIt()
+    expect(
+      await screen.findByText('Fri 2026-11-20: long run, 4.7 miles'),
+    ).toBeInTheDocument()
+  })
+
+  it('saves availability and re-plans the week', async () => {
+    await renderIt()
+    await screen.findByText('Fri 2026-11-20: long run, 4.7 miles')
+    fireEvent.change(screen.getByLabelText('Friday'), {
+      target: { value: 'off' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save availability' }))
+    await screen.findByText('Availability saved.')
+    expect(
+      screen.queryByText('Fri 2026-11-20: long run, 4.7 miles'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/long run, 4\.7 miles/)).toBeInTheDocument()
+  })
+
+  it('stores the availability for this week in storage', async () => {
+    const storage = await seededStorage()
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard today="2026-11-17" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    await screen.findByText(/long run, 4\.7 miles/)
+    fireEvent.change(screen.getByLabelText('Friday'), {
+      target: { value: 'off' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save availability' }))
+    await screen.findByText('Availability saved.')
+    expect(await storage.getAvailability(2)).toEqual([
+      'open',
+      'open',
+      'open',
+      'open',
+      'off',
+      'open',
+      'open',
+    ])
+  })
+
+  it('remembers saved availability for this week', async () => {
+    const storage = await seededStorage()
+    await storage.saveAvailability(2, [
+      'open',
+      'open',
+      'open',
+      'open',
+      'off',
+      'open',
+      'open',
+    ])
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard today="2026-11-17" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    await screen.findByText(/long run, 4\.7 miles/)
+    expect((screen.getByLabelText('Friday') as HTMLSelectElement).value).toBe(
+      'off',
+    )
+    expect(screen.queryByText(/Fri 2026-11-20/)).not.toBeInTheDocument()
+  })
+
+  it('is hidden before the plan starts', async () => {
+    render(
+      <StorageProvider storage={emptyStorage()}>
+        <Dashboard today="2026-11-01" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    await screen.findByText(/Plan starts in/)
+    expect(
+      screen.queryByRole('button', { name: 'Save availability' }),
+    ).not.toBeInTheDocument()
   })
 })

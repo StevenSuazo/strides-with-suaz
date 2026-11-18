@@ -15,6 +15,7 @@ import { CheckInForm } from './CheckInForm'
 import { CheckInList } from './CheckInList'
 import { LogRunForm } from './LogRunForm'
 import { RunList } from './RunList'
+import { WeekSchedule } from './WeekSchedule'
 import { ThisWeek } from './ThisWeek'
 
 const defaultNewId = (): string => `app-${crypto.randomUUID()}`
@@ -60,6 +61,7 @@ export const Dashboard = ({
   return (
     <>
       <ThisWeek view={state.view} today={today} />
+      <WeekSchedule view={state.view} />
       <section>
         <h2>Runs</h2>
         <LogRunForm
