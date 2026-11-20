@@ -38,13 +38,13 @@ describe('PlannedWeek: the plan', () => {
   it('lists each planned run with its day and date', () => {
     show(allOpen)
     expect(
-      screen.getByText('Mon 2026-11-16: easy run, 2.3 miles'),
+      screen.getByText('Mon, Nov 16: easy run, 2.3 miles'),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('Wed 2026-11-18: easy run, 2.3 miles'),
+      screen.getByText('Wed, Nov 18: easy run, 2.3 miles'),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('Fri 2026-11-20: long run, 4.7 miles'),
+      screen.getByText('Fri, Nov 20: long run, 4.7 miles'),
     ).toBeInTheDocument()
   })
 
@@ -58,7 +58,7 @@ describe('PlannedWeek: the plan', () => {
 
   it('moves the long run when Friday is off', () => {
     show(['open', 'open', 'open', 'open', 'off', 'open', 'open'])
-    expect(screen.queryByText(/Fri 2026-11-20/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Fri, Nov 20/)).not.toBeInTheDocument()
     expect(screen.getByText(/long run, 4\.7 miles/)).toBeInTheDocument()
   })
 
@@ -109,7 +109,7 @@ describe('PlannedWeek: done, missed and coming up', () => {
     ).toBeInTheDocument()
     expect(
       screen.getAllByRole('listitem').map((li) => li.textContent),
-    ).toContain('2026-11-21: 3.25 miles')
+    ).toContain('Sat, Nov 21: 3.25 miles')
   })
 
   it('has no extra runs heading when everything matched', () => {
@@ -124,7 +124,7 @@ describe('PlannedWeek: matching by hand', () => {
   it('has no match dropdowns when there are no runs this week', () => {
     show(allOpen)
     expect(
-      screen.queryByLabelText('Run for Mon 2026-11-16'),
+      screen.queryByLabelText('Run for Mon, Nov 16'),
     ).not.toBeInTheDocument()
   })
 
@@ -133,17 +133,16 @@ describe('PlannedWeek: matching by hand', () => {
       runs: [run('a', '2026-11-16', 2.5), run('b', '2026-11-21', 3)],
     })
     const select = screen.getByLabelText(
-      'Run for Mon 2026-11-16',
+      'Run for Mon, Nov 16',
     ) as HTMLSelectElement
     expect(Array.from(select.options).map((o) => o.text)).toEqual([
       'Match to…',
-      '2026-11-16: 2.5 miles',
-      '2026-11-21: 3 miles',
+      'Mon, Nov 16: 2.5 miles',
+      'Sat, Nov 21: 3 miles',
     ])
     expect(select.value).toBe('a')
     expect(
-      (screen.getByLabelText('Run for Wed 2026-11-18') as HTMLSelectElement)
-        .value,
+      (screen.getByLabelText('Run for Wed, Nov 18') as HTMLSelectElement).value,
     ).toBe('')
   })
 
@@ -155,10 +154,10 @@ describe('PlannedWeek: matching by hand', () => {
         calls.push([w, r])
       },
     })
-    fireEvent.change(screen.getByLabelText('Run for Wed 2026-11-18'), {
+    fireEvent.change(screen.getByLabelText('Run for Wed, Nov 18'), {
       target: { value: 'b' },
     })
-    await screen.findByLabelText('Run for Wed 2026-11-18')
+    await screen.findByLabelText('Run for Wed, Nov 18')
     expect(calls).toEqual([['w2-2', 'b']])
   })
 
@@ -169,7 +168,7 @@ describe('PlannedWeek: matching by hand', () => {
         throw new Error('offline')
       },
     })
-    fireEvent.change(screen.getByLabelText('Run for Wed 2026-11-18'), {
+    fireEvent.change(screen.getByLabelText('Run for Wed, Nov 18'), {
       target: { value: 'b' },
     })
     expect((await screen.findByRole('alert')).textContent).toBe(

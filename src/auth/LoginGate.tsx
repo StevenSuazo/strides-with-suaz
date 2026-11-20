@@ -27,7 +27,7 @@ export const LoginGate = ({ children }: { children: ReactNode }) => {
   if (state.status === 'signedIn') {
     return (
       <>
-        <div>
+        <div className="app-bar">
           <span>{state.user.email}</span>
           <button type="button" onClick={() => void auth.signOut()}>
             Sign out
@@ -58,7 +58,11 @@ export const LoginGate = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <form onSubmit={(event) => void submit(event)} noValidate>
+    <form
+      className="card login"
+      onSubmit={(event) => void submit(event)}
+      noValidate
+    >
       <label htmlFor="login-email">Email</label>
       <input
         id="login-email"

@@ -43,7 +43,7 @@ describe('CheckInList', () => {
   it('describes a check-in with no pain', () => {
     setup([checkIn('a', '2026-11-15')])
     expect(
-      screen.getByText('2026-11-15: after a run, felt good, no pain.'),
+      screen.getByText('Sun, Nov 15: after a run, felt good, no pain.'),
     ).toBeInTheDocument()
   })
 
@@ -61,7 +61,7 @@ describe('CheckInList', () => {
     ])
     expect(
       screen.getByText(
-        '2026-11-16: next morning, felt okay, knee (left) 2/10; toe 1/10. Note: tight at the end',
+        'Mon, Nov 16: next morning, felt okay, knee (left) 2/10; toe 1/10. Note: tight at the end',
       ),
     ).toBeInTheDocument()
   })
@@ -73,9 +73,9 @@ describe('CheckInList', () => {
       checkIn('b', '2026-11-12'),
     ])
     const text = screen.getAllByRole('listitem').map((item) => item.textContent)
-    expect(text[0]).toContain('2026-11-16')
-    expect(text[1]).toContain('2026-11-12')
-    expect(text[2]).toContain('2026-11-10')
+    expect(text[0]).toContain('Mon, Nov 16')
+    expect(text[1]).toContain('Thu, Nov 12')
+    expect(text[2]).toContain('Tue, Nov 10')
   })
 
   it('shows only the ten most recent', () => {
@@ -85,13 +85,13 @@ describe('CheckInList', () => {
       ),
     )
     expect(screen.getAllByRole('listitem')).toHaveLength(10)
-    expect(screen.queryByText(/2026-11-01:/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Sun, Nov 1:/)).not.toBeInTheDocument()
   })
 
   it('asks before deleting, then deletes on confirm', async () => {
     const { deleted, user } = setup([checkIn('a', '2026-11-15')])
     await user.click(
-      screen.getByRole('button', { name: 'Delete 2026-11-15 check-in' }),
+      screen.getByRole('button', { name: 'Delete Sun, Nov 15 check-in' }),
     )
     expect(deleted).toEqual([])
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
@@ -101,7 +101,7 @@ describe('CheckInList', () => {
   it('keeps the check-in when you choose Keep', async () => {
     const { deleted, user } = setup([checkIn('a', '2026-11-15')])
     await user.click(
-      screen.getByRole('button', { name: 'Delete 2026-11-15 check-in' }),
+      screen.getByRole('button', { name: 'Delete Sun, Nov 15 check-in' }),
     )
     await user.click(screen.getByRole('button', { name: 'Keep check-in' }))
     expect(deleted).toEqual([])
@@ -112,7 +112,7 @@ describe('CheckInList', () => {
       throw new Error('offline')
     })
     await user.click(
-      screen.getByRole('button', { name: 'Delete 2026-11-15 check-in' }),
+      screen.getByRole('button', { name: 'Delete Sun, Nov 15 check-in' }),
     )
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(

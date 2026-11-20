@@ -40,9 +40,9 @@ describe('Dashboard: runs', () => {
   it('lists the saved runs under the week', async () => {
     show(await seededStorage())
     expect(
-      await screen.findByText(/2026-11-15: 4.01 miles/),
+      await screen.findByText(/Sun, Nov 15: 4.01 miles/),
     ).toBeInTheDocument()
-    expect(screen.getByText(/2026-11-09: 2.05 miles/)).toBeInTheDocument()
+    expect(screen.getByText(/Mon, Nov 9: 2.05 miles/)).toBeInTheDocument()
   })
 
   it('logs a run and updates the week', async () => {
@@ -80,14 +80,17 @@ describe('Dashboard: runs', () => {
     const user = show(storage)
     await screen.findByText('Week 2 of 19')
     await user.click(
-      screen.getByRole('button', { name: 'Edit 2026-11-15 run' }),
+      screen.getByRole('button', { name: 'Actions for Sun, Nov 15 run' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit Sun, Nov 15 run' }),
     )
     const miles = screen.getByLabelText('Miles') as HTMLInputElement
     expect(miles.value).toBe('4.01')
     await user.clear(miles)
     await user.type(miles, '5')
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
-    expect(await screen.findByText(/2026-11-15: 5 miles/)).toBeInTheDocument()
+    expect(await screen.findByText(/Sun, Nov 15: 5 miles/)).toBeInTheDocument()
     const saved = await storage.getRuns()
     expect(saved).toHaveLength(3)
     expect(screen.getByRole('button', { name: 'Log run' })).toBeInTheDocument()
@@ -97,7 +100,10 @@ describe('Dashboard: runs', () => {
     const user = show(await seededStorage())
     await screen.findByText('Week 2 of 19')
     await user.click(
-      screen.getByRole('button', { name: 'Edit 2026-11-15 run' }),
+      screen.getByRole('button', { name: 'Actions for Sun, Nov 15 run' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit Sun, Nov 15 run' }),
     )
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(screen.getByRole('button', { name: 'Log run' })).toBeInTheDocument()
@@ -115,12 +121,15 @@ describe('Dashboard: runs', () => {
     const user = show(storage)
     await screen.findByText('3 of 9.3 miles so far')
     await user.click(
-      screen.getByRole('button', { name: 'Delete 2026-11-17 run' }),
+      screen.getByRole('button', { name: 'Actions for Tue, Nov 17 run' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Delete Tue, Nov 17 run' }),
     )
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(await screen.findByText('0 of 9.3 miles so far')).toBeInTheDocument()
     expect(await storage.getRuns()).toHaveLength(3)
-    expect(screen.queryByText(/2026-11-17: 3 miles/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Tue, Nov 17: 3 miles/)).not.toBeInTheDocument()
   })
 
   it('changes this week’s target when an old run is fixed', async () => {
@@ -128,7 +137,10 @@ describe('Dashboard: runs', () => {
     const user = show(storage)
     await screen.findByText('Target: 9.3 miles')
     await user.click(
-      screen.getByRole('button', { name: 'Edit 2026-11-15 run' }),
+      screen.getByRole('button', { name: 'Actions for Sun, Nov 15 run' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit Sun, Nov 15 run' }),
     )
     const miles = screen.getByLabelText('Miles') as HTMLInputElement
     await user.clear(miles)
@@ -155,7 +167,7 @@ describe('Dashboard: check-ins', () => {
     })
     show(storage)
     expect(
-      await screen.findByText('2026-11-15: after a run, felt good, no pain.'),
+      await screen.findByText('Sun, Nov 15: after a run, felt good, no pain.'),
     ).toBeInTheDocument()
   })
 
@@ -189,7 +201,7 @@ describe('Dashboard: check-ins', () => {
     const user = show(storage)
     await screen.findByText('Week 2 of 19')
     await user.click(
-      screen.getByRole('button', { name: 'Delete 2026-11-15 check-in' }),
+      screen.getByRole('button', { name: 'Delete Sun, Nov 15 check-in' }),
     )
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(await screen.findByText('No check-ins yet.')).toBeInTheDocument()
@@ -211,20 +223,20 @@ describe('Dashboard: schedule', () => {
   it('plans this week from the default all-open availability', async () => {
     await renderIt()
     expect(
-      await screen.findByText('Fri 2026-11-20: long run, 4.7 miles'),
+      await screen.findByText('Fri, Nov 20: long run, 4.7 miles'),
     ).toBeInTheDocument()
   })
 
   it('saves availability and re-plans the week', async () => {
     await renderIt()
-    await screen.findByText('Fri 2026-11-20: long run, 4.7 miles')
+    await screen.findByText('Fri, Nov 20: long run, 4.7 miles')
     fireEvent.change(screen.getByLabelText('Friday'), {
       target: { value: 'off' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save availability' }))
     await screen.findByText('Availability saved.')
     expect(
-      screen.queryByText('Fri 2026-11-20: long run, 4.7 miles'),
+      screen.queryByText('Fri, Nov 20: long run, 4.7 miles'),
     ).not.toBeInTheDocument()
     expect(screen.getByText(/long run, 4\.7 miles/)).toBeInTheDocument()
   })
@@ -273,7 +285,7 @@ describe('Dashboard: schedule', () => {
     expect((screen.getByLabelText('Friday') as HTMLSelectElement).value).toBe(
       'off',
     )
-    expect(screen.queryByText(/Fri 2026-11-20/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Fri, Nov 20/)).not.toBeInTheDocument()
   })
 
   it('is hidden before the plan starts', async () => {
@@ -314,15 +326,14 @@ describe('Dashboard: planned vs done', () => {
   it('moves a run to another planned day and saves the override', async () => {
     const storage = await withRun()
     await screen.findByText('Done: ran 2.5 miles')
-    fireEvent.change(screen.getByLabelText('Run for Wed 2026-11-18'), {
+    fireEvent.change(screen.getByLabelText('Run for Wed, Nov 18'), {
       target: { value: 'r1' },
     })
     await waitFor(async () =>
       expect(await storage.getOverrides()).toEqual({ r1: 'w2-2' }),
     )
     expect(
-      (screen.getByLabelText('Run for Wed 2026-11-18') as HTMLSelectElement)
-        .value,
+      (screen.getByLabelText('Run for Wed, Nov 18') as HTMLSelectElement).value,
     ).toBe('r1')
     expect(screen.getByText('Missed')).toBeInTheDocument()
   })
@@ -343,8 +354,138 @@ describe('Dashboard: planned vs done', () => {
     )
     await screen.findByText('Done: ran 2.5 miles')
     expect(
-      (screen.getByLabelText('Run for Wed 2026-11-18') as HTMLSelectElement)
-        .value,
+      (screen.getByLabelText('Run for Wed, Nov 18') as HTMLSelectElement).value,
     ).toBe('r1')
+  })
+})
+
+describe('Dashboard: collapsed forms', () => {
+  const openStates = () =>
+    Array.from(document.querySelectorAll('details')).map((d) => d.open)
+
+  it('starts with every form collapsed', async () => {
+    show(await seededStorage())
+    await screen.findByText('Edit availability')
+    expect(document.querySelectorAll('details').length).toBe(3)
+    expect(openStates()).toEqual([false, false, false])
+  })
+
+  it('opens the run form when you start editing a run', async () => {
+    show(await seededStorage())
+    await screen.findByText('Edit availability')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Actions for Sun, Nov 15 run' }),
+    )
+    fireEvent.click(
+      screen.getByRole('menuitem', { name: 'Edit Sun, Nov 15 run' }),
+    )
+    expect(screen.getByText('Edit run')).toBeInTheDocument()
+    expect(openStates().filter(Boolean).length).toBe(1)
+    expect(
+      screen.getByRole('button', { name: 'Save changes' }),
+    ).toBeInTheDocument()
+  })
+
+  it('labels the sections you can open', async () => {
+    show(await seededStorage())
+    await screen.findByText('Edit availability')
+    expect(screen.getByText('Log a run')).toBeInTheDocument()
+    expect(screen.getByText('Add a check-in')).toBeInTheDocument()
+    expect(screen.getByText('Edit availability')).toBeInTheDocument()
+  })
+})
+
+describe('Dashboard: week strip', () => {
+  it('shows this week as a strip above the week summary', async () => {
+    show(await seededStorage())
+    const strip = await screen.findByRole('group', { name: 'This week' })
+    const summary = screen.getByText('Week 2 of 19')
+    expect(
+      strip.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      screen.getByRole('group', { name: /Fri, Nov 20: long run/ }),
+    ).toBeInTheDocument()
+  })
+
+  it('still shows the week summary before availability has loaded', async () => {
+    show(await seededStorage())
+    expect(await screen.findByText('Week 2 of 19')).toBeInTheDocument()
+  })
+
+  it('updates when you save availability', async () => {
+    show(await seededStorage())
+    await screen.findByRole('group', { name: /Fri, Nov 20: long run/ })
+    fireEvent.change(screen.getByLabelText('Friday'), {
+      target: { value: 'off' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save availability' }))
+    await screen.findByText('Availability saved.')
+    expect(
+      screen.queryByRole('group', { name: /Fri, Nov 20: long run/ }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Dashboard: week strip follows hand matches', () => {
+  it('shows a moved run on the day it was matched to', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    await storage.saveOverride('r1', 'w2-2')
+    show(storage)
+    expect(
+      await screen.findByRole('group', {
+        name: 'Wed, Nov 18: easy run, 2.3 miles planned, done: ran 2.5 miles',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('group', {
+        name: 'Mon, Nov 16: easy run, 2.3 miles planned, missed',
+      }),
+    ).toBeInTheDocument()
+  })
+})
+
+describe('Dashboard: run types', () => {
+  it("marks last week's longest run as long", async () => {
+    show(await seededStorage())
+    await screen.findByText('Edit availability')
+    const items = screen
+      .getAllByRole('listitem')
+      .filter((li) => li.querySelector('.run-menu'))
+      .map((li) => li.textContent)
+    const long = items.find((t) => t?.includes('Sun, Nov 15: 4.01 miles'))
+    const easy = items.find((t) => t?.includes('Wed, Nov 11: 2.5 miles'))
+    expect(long).toContain('Long')
+    expect(easy).toContain('Easy')
+  })
+
+  it('uses the planned type for a run matched this week', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    show(storage)
+    await screen.findByText('Done: ran 2.5 miles')
+    const runItem = () =>
+      screen
+        .getAllByRole('listitem')
+        .find(
+          (li) =>
+            li.querySelector('.run-menu') &&
+            li.textContent?.includes('Mon, Nov 16: 2.5 miles'),
+        )
+    // Alone this week it is the longest run, but it was planned as an easy run.
+    await waitFor(() => expect(runItem()?.textContent).toContain('Easy'))
+    expect(runItem()?.querySelector('.dot-easy')).not.toBeNull()
+    expect(runItem()?.querySelector('.dot-long')).toBeNull()
   })
 })

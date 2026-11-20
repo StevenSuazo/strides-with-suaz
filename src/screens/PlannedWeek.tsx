@@ -1,7 +1,7 @@
 /**
  * PlannedWeek.tsx: this week's planned runs, and how you did against them.
  *
- * Each line reads "Fri 2026-11-20: long run, 4.7 miles" followed by its
+ * Each line reads "Fri, Nov 20: long run, 4.7 miles" followed by its
  * status: "Done: ran 4.8 miles", "Missed", or "Coming up". Runs you logged
  * that matched nothing are listed under "Extra runs". Each planned run has a
  * dropdown to pick a different logged run for it; onMatch saves that.
@@ -17,9 +17,7 @@ import type {
   WeekTarget,
 } from '../engine/types'
 import { dateOfDay, matchWeek } from '../plan/weekMatch'
-import { formatMiles } from './format'
-
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+import { formatDate, formatMiles } from './format'
 
 export const PlannedWeek = ({
   target,
@@ -64,13 +62,13 @@ export const PlannedWeek = ({
       {rows.length === 0 ? (
         <p>No runs planned this week.</p>
       ) : (
-        <ul>
+        <ul className="items">
           {rows.map(({ workout, dayIndex, status, run }) => {
-            const name = `${DAY_NAMES[dayIndex]} ${dateOfDay(weekStart, dayIndex)}`
+            const name = formatDate(dateOfDay(weekStart, dayIndex))
             return (
               <li key={workout.id}>
-                <span>{`${name}: ${workout.kind} run, ${formatMiles(workout.miles)} miles`}</span>{' '}
-                <span>
+                <span className="item-text">{`${name}: ${workout.kind} run, ${formatMiles(workout.miles)} miles`}</span>{' '}
+                <span className={`chip chip-${status}`}>
                   {status === 'done' && run
                     ? `Done: ran ${formatMiles(run.miles)} miles`
                     : status === 'missed'
@@ -90,7 +88,7 @@ export const PlannedWeek = ({
                     </option>
                     {weekRuns.map((option) => (
                       <option key={option.id} value={option.id}>
-                        {`${option.date}: ${formatMiles(option.miles)} miles`}
+                        {`${formatDate(option.date)}: ${formatMiles(option.miles)} miles`}
                       </option>
                     ))}
                   </select>
@@ -104,11 +102,11 @@ export const PlannedWeek = ({
       {extraRuns.length > 0 && (
         <>
           <h3>Extra runs</h3>
-          <ul>
+          <ul className="items">
             {extraRuns.map((run) => (
               <li
                 key={run.id}
-              >{`${run.date}: ${formatMiles(run.miles)} miles`}</li>
+              >{`${formatDate(run.date)}: ${formatMiles(run.miles)} miles`}</li>
             ))}
           </ul>
         </>

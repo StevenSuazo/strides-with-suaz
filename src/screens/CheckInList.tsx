@@ -1,13 +1,14 @@
 /**
  * CheckInList.tsx: your most recent check-ins, with Delete.
  *
- * Ten newest first. Each line reads like "2026-11-15: after a run, felt good,
+ * Ten newest first. Each line reads like "Sun, Nov 15: after a run, felt good,
  * knee (left) 2/10. Note: ...". Delete asks to confirm (Confirm delete or Keep
  * check-in) before calling onDelete, and shows the reason if that fails.
  */
 import { useState } from 'react'
 import type { CheckIn, CheckInEntry } from '../engine/types'
 import { AREA_LABELS, FEEL_LABELS, KIND_LABELS } from './checkInLabels'
+import { formatDate } from './format'
 
 const SHOWN = 10
 
@@ -31,7 +32,7 @@ const describe = (checkIn: CheckIn): string => {
       ? 'no pain'
       : checkIn.entries.map(spotText).join('; ')
   const note = checkIn.note ? ` Note: ${checkIn.note}` : ''
-  return `${checkIn.date}: ${kind}, felt ${feel}, ${pain}.${note}`
+  return `${formatDate(checkIn.date)}: ${kind}, felt ${feel}, ${pain}.${note}`
 }
 
 export const CheckInList = ({
@@ -58,17 +59,18 @@ export const CheckInList = ({
 
   return (
     <>
-      <ul>
+      <ul className="items">
         {[...checkIns]
           .sort(newestFirst)
           .slice(0, SHOWN)
           .map((checkIn) => (
             <li key={checkIn.id}>
-              {describe(checkIn)}
+              <span className="item-text">{describe(checkIn)}</span>
               {confirming === checkIn.id ? (
                 <>
                   <button
                     type="button"
+                    className="danger"
                     onClick={() => void confirmDelete(checkIn.id)}
                   >
                     Confirm delete
@@ -83,7 +85,7 @@ export const CheckInList = ({
               ) : (
                 <button
                   type="button"
-                  aria-label={`Delete ${checkIn.date} check-in`}
+                  aria-label={`Delete ${formatDate(checkIn.date)} check-in`}
                   onClick={() => {
                     setError(undefined)
                     setConfirming(checkIn.id)

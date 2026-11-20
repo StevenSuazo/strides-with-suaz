@@ -35,7 +35,7 @@ const PastWeeks = ({ weeks }: { weeks: PlanView['weeks'] }) => {
   return (
     <section>
       <h3>Past weeks</h3>
-      <ul>
+      <ul className="items">
         {weeks.map(({ result, gate }) => (
           <li key={result.weekIndex}>
             {`Week ${result.weekIndex}: ran ${formatMiles(result.actualMiles)} of ${formatMiles(result.targetMiles)} miles${gate ? `, then ${AFTER[gate.decision]}` : ''}.`}
@@ -56,7 +56,7 @@ export const ThisWeek = ({
   if (view.status === 'notStarted') {
     const days = daysUntilRace(today, PLAN.startDate)
     return (
-      <section className="this-week">
+      <section className="this-week card">
         <h2>{`Plan starts in ${plural(days, 'day')}`}</h2>
         {view.target && (
           <p>{`First week: ${formatMiles(view.target.targetMiles)} miles, long run ${formatMiles(view.target.longRunMiles)} miles.`}</p>
@@ -67,7 +67,7 @@ export const ThisWeek = ({
 
   if (view.status === 'finished' || !view.target) {
     return (
-      <section className="this-week">
+      <section className="this-week card">
         <h2>Plan complete</h2>
         <PastWeeks weeks={view.weeks} />
       </section>
@@ -78,15 +78,15 @@ export const ThisWeek = ({
   const peak = formatMiles(Math.max(...view.curve))
 
   return (
-    <section className="this-week">
+    <section className="this-week card">
       <h2>{`Week ${view.weekIndex} of ${PLAN.totalWeeks}`}</h2>
-      <p>{raceCountdown(today)}</p>
+      <p className="countdown">{raceCountdown(today)}</p>
 
-      <p>{`Target: ${formatMiles(target.targetMiles)} miles`}</p>
-      <p>{`Long run: ${formatMiles(target.longRunMiles)} miles`}</p>
-      <p>{view.reason ?? 'Week 1 is your starting week.'}</p>
+      <p className="stat">{`Target: ${formatMiles(target.targetMiles)} miles`}</p>
+      <p className="stat">{`Long run: ${formatMiles(target.longRunMiles)} miles`}</p>
+      <p className="muted">{view.reason ?? 'Week 1 is your starting week.'}</p>
 
-      <p>{`${formatMiles(view.milesSoFar)} of ${formatMiles(target.targetMiles)} miles so far`}</p>
+      <p className="progress-label">{`${formatMiles(view.milesSoFar)} of ${formatMiles(target.targetMiles)} miles so far`}</p>
       <progress
         aria-label="Miles so far"
         max={target.targetMiles}
