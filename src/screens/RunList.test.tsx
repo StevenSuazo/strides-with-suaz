@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { Run, RunKind } from '../engine/types'
+import { formatDate } from './format'
 import { RunList } from './RunList'
 
 const run = (
@@ -46,7 +47,10 @@ const setup = (
 const openMenu = async (
   user: ReturnType<typeof userEvent.setup>,
   date: string,
-) => user.click(screen.getByRole('button', { name: `Actions for ${date} run` }))
+) =>
+  user.click(
+    screen.getByRole('button', { name: `Actions for ${formatDate(date)} run` }),
+  )
 
 describe('RunList', () => {
   it('says so when there are no runs', () => {
@@ -63,15 +67,15 @@ describe('RunList', () => {
     const items = screen
       .getAllByRole('listitem')
       .map((item) => item.textContent)
-    expect(items[0]).toContain('2026-11-15: 4.01 miles')
-    expect(items[1]).toContain('2026-11-11: 2.5 miles')
-    expect(items[2]).toContain('2026-11-09: 2.05 miles')
+    expect(items[0]).toContain('Sun, Nov 15: 4.01 miles')
+    expect(items[1]).toContain('Wed, Nov 11: 2.5 miles')
+    expect(items[2]).toContain('Mon, Nov 9: 2.05 miles')
   })
 
   it('marks runs that came from Strava', () => {
     setup([run('a', '2026-11-09', 2, 'strava')])
     expect(
-      screen.getByText(/2026-11-09: 2 miles \(Strava\)/),
+      screen.getByText(/Mon, Nov 9: 2 miles \(Strava\)/),
     ).toBeInTheDocument()
   })
 
@@ -81,8 +85,8 @@ describe('RunList', () => {
     )
     setup(many)
     expect(screen.getAllByRole('listitem')).toHaveLength(10)
-    expect(screen.queryByText(/2026-11-01:/)).not.toBeInTheDocument()
-    expect(screen.getByText(/2026-11-12:/)).toBeInTheDocument()
+    expect(screen.queryByText(/Sun, Nov 1:/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Thu, Nov 12:/)).toBeInTheDocument()
   })
 
   it('hands the run to onEdit', async () => {
@@ -90,7 +94,7 @@ describe('RunList', () => {
     const { edited, user } = setup([target])
     await openMenu(user, '2026-11-09')
     await user.click(
-      screen.getByRole('menuitem', { name: 'Edit 2026-11-09 run' }),
+      screen.getByRole('menuitem', { name: 'Edit Mon, Nov 9 run' }),
     )
     expect(edited).toEqual([target])
   })
@@ -99,7 +103,7 @@ describe('RunList', () => {
     const { deleted, user } = setup([run('a', '2026-11-09', 2.05)])
     await openMenu(user, '2026-11-09')
     await user.click(
-      screen.getByRole('menuitem', { name: 'Delete 2026-11-09 run' }),
+      screen.getByRole('menuitem', { name: 'Delete Mon, Nov 9 run' }),
     )
     expect(deleted).toEqual([])
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
@@ -110,12 +114,12 @@ describe('RunList', () => {
     const { deleted, user } = setup([run('a', '2026-11-09', 2.05)])
     await openMenu(user, '2026-11-09')
     await user.click(
-      screen.getByRole('menuitem', { name: 'Delete 2026-11-09 run' }),
+      screen.getByRole('menuitem', { name: 'Delete Mon, Nov 9 run' }),
     )
     await user.click(screen.getByRole('button', { name: 'Keep run' }))
     expect(deleted).toEqual([])
     expect(
-      screen.getByRole('button', { name: 'Actions for 2026-11-09 run' }),
+      screen.getByRole('button', { name: 'Actions for Mon, Nov 9 run' }),
     ).toBeInTheDocument()
   })
 
@@ -127,7 +131,7 @@ describe('RunList', () => {
     })
     await openMenu(user, '2026-11-09')
     await user.click(
-      screen.getByRole('menuitem', { name: 'Delete 2026-11-09 run' }),
+      screen.getByRole('menuitem', { name: 'Delete Mon, Nov 9 run' }),
     )
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(
@@ -139,7 +143,7 @@ describe('RunList', () => {
     const { user } = setup([run('a', '2026-11-09', 2.05)])
     expect(screen.queryByRole('menuitem')).not.toBeInTheDocument()
     const dots = screen.getByRole('button', {
-      name: 'Actions for 2026-11-09 run',
+      name: 'Actions for Mon, Nov 9 run',
     })
     expect(dots.getAttribute('aria-expanded')).toBe('false')
     await user.click(dots)
@@ -167,7 +171,7 @@ describe('RunList', () => {
   it('closes the menu when you click elsewhere', async () => {
     const { user } = setup([run('a', '2026-11-09', 2.05)])
     await openMenu(user, '2026-11-09')
-    await user.click(screen.getByText(/2026-11-09: 2.05 miles/))
+    await user.click(screen.getByText(/Mon, Nov 9: 2.05 miles/))
     expect(screen.queryByRole('menuitem')).not.toBeInTheDocument()
   })
 
@@ -180,7 +184,7 @@ describe('RunList', () => {
     await openMenu(user, '2026-11-10')
     expect(screen.getAllByRole('menuitem')).toHaveLength(2)
     expect(
-      screen.getByRole('menuitem', { name: 'Edit 2026-11-10 run' }),
+      screen.getByRole('menuitem', { name: 'Edit Tue, Nov 10 run' }),
     ).toBeInTheDocument()
   })
 
@@ -188,7 +192,7 @@ describe('RunList', () => {
     const { user } = setup([run('a', '2026-11-09', 2.05)])
     await openMenu(user, '2026-11-09')
     await user.click(
-      screen.getByRole('menuitem', { name: 'Edit 2026-11-09 run' }),
+      screen.getByRole('menuitem', { name: 'Edit Mon, Nov 9 run' }),
     )
     expect(screen.queryByRole('menuitem')).not.toBeInTheDocument()
   })

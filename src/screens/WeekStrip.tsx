@@ -9,7 +9,7 @@
  */
 import type { IsoDate, Run } from '../engine/types'
 import { dateOfDay, type PlannedRow } from '../plan/weekMatch'
-import { formatMiles } from './format'
+import { formatDate, formatMiles } from './format'
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -35,7 +35,7 @@ export const WeekStrip = ({
   <div className="week-strip" role="group" aria-label="This week">
     {DAY_NAMES.map((dayName, dayIndex) => {
       const date = dateOfDay(weekStart, dayIndex)
-      const name = `${dayName} ${date}`
+      const name = formatDate(date)
       const row = rows.find((candidate) => candidate.dayIndex === dayIndex)
       const extra = extraRuns.filter((candidate) => candidate.date === date)
       const extraMiles = extra.reduce((sum, item) => sum + item.miles, 0)

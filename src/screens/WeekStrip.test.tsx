@@ -54,8 +54,8 @@ describe('WeekStrip', () => {
 
   it('marks today', () => {
     show()
-    expect(day(/2026-11-17/).getAttribute('aria-current')).toBe('date')
-    expect(day(/2026-11-16/).getAttribute('aria-current')).toBeNull()
+    expect(day(/Tue, Nov 17/).getAttribute('aria-current')).toBe('date')
+    expect(day(/Mon, Nov 16/).getAttribute('aria-current')).toBeNull()
   })
 
   it('marks nothing when today is outside the week', () => {
@@ -65,52 +65,52 @@ describe('WeekStrip', () => {
 
   it('shows the planned miles on planned days only', () => {
     show()
-    expect(day(/2026-11-18/).textContent).toContain('2.3')
-    expect(day(/2026-11-20/).textContent).toContain('4.7')
-    expect(day(/2026-11-19/).textContent).not.toMatch(/\d\.\d/)
+    expect(day(/Wed, Nov 18/).textContent).toContain('2.3')
+    expect(day(/Fri, Nov 20/).textContent).toContain('4.7')
+    expect(day(/Thu, Nov 19/).textContent).not.toMatch(/\d\.\d/)
   })
 
   it('describes each day in words', () => {
     show()
-    expect(day(/2026-11-20/).getAttribute('aria-label')).toBe(
-      'Fri 2026-11-20: long run, 4.7 miles planned, coming up',
+    expect(day(/Fri, Nov 20/).getAttribute('aria-label')).toBe(
+      'Fri, Nov 20: long run, 4.7 miles planned, coming up',
     )
-    expect(day(/2026-11-19/).getAttribute('aria-label')).toBe(
-      'Thu 2026-11-19: no run planned',
+    expect(day(/Thu, Nov 19/).getAttribute('aria-label')).toBe(
+      'Thu, Nov 19: no run planned',
     )
   })
 
   it('shows a done day with a check and the miles run', () => {
     show([run('a', '2026-11-16', 2.5)])
-    expect(day(/2026-11-16/).textContent).toContain('✓')
-    expect(day(/2026-11-16/).textContent).toContain('2.5')
-    expect(day(/2026-11-16/).getAttribute('aria-label')).toBe(
-      'Mon 2026-11-16: easy run, 2.3 miles planned, done: ran 2.5 miles',
+    expect(day(/Mon, Nov 16/).textContent).toContain('✓')
+    expect(day(/Mon, Nov 16/).textContent).toContain('2.5')
+    expect(day(/Mon, Nov 16/).getAttribute('aria-label')).toBe(
+      'Mon, Nov 16: easy run, 2.3 miles planned, done: ran 2.5 miles',
     )
   })
 
   it('shows a missed day', () => {
     show()
-    expect(day(/2026-11-16/).getAttribute('aria-label')).toBe(
-      'Mon 2026-11-16: easy run, 2.3 miles planned, missed',
+    expect(day(/Mon, Nov 16/).getAttribute('aria-label')).toBe(
+      'Mon, Nov 16: easy run, 2.3 miles planned, missed',
     )
-    expect(day(/2026-11-16/).className).toContain('missed')
-    expect(day(/2026-11-18/).className).not.toContain('missed')
+    expect(day(/Mon, Nov 16/).className).toContain('missed')
+    expect(day(/Wed, Nov 18/).className).not.toContain('missed')
   })
 
   it('tells easy runs from long runs', () => {
     show()
-    expect(day(/2026-11-18/).querySelector('.dot-easy')).not.toBeNull()
-    expect(day(/2026-11-20/).querySelector('.dot-long')).not.toBeNull()
-    expect(day(/2026-11-19/).querySelector('.dot')).toBeNull()
+    expect(day(/Wed, Nov 18/).querySelector('.dot-easy')).not.toBeNull()
+    expect(day(/Fri, Nov 20/).querySelector('.dot-long')).not.toBeNull()
+    expect(day(/Thu, Nov 19/).querySelector('.dot')).toBeNull()
   })
 
   it('shows an extra run on an unplanned day', () => {
     show([run('x', '2026-11-21', 3.25)])
-    expect(day(/2026-11-21/).getAttribute('aria-label')).toBe(
-      'Sat 2026-11-21: extra run, 3.25 miles',
+    expect(day(/Sat, Nov 21/).getAttribute('aria-label')).toBe(
+      'Sat, Nov 21: extra run, 3.25 miles',
     )
-    expect(day(/2026-11-21/).textContent).toContain('3.25')
+    expect(day(/Sat, Nov 21/).textContent).toContain('3.25')
   })
 
   it('shows an empty week with no dots', () => {

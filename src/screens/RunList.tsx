@@ -11,7 +11,7 @@
  */
 import { useEffect, useState } from 'react'
 import type { Run, RunKind } from '../engine/types'
-import { formatMiles } from './format'
+import { formatDate, formatMiles } from './format'
 
 const SHOWN = 10
 
@@ -75,7 +75,7 @@ export const RunList = ({
                 {kind && (
                   <span className={`dot dot-${kind}`} aria-hidden="true" />
                 )}
-                <span className="item-text">{`${run.date}: ${formatMiles(run.miles)} miles${run.source === 'strava' ? ' (Strava)' : ''}`}</span>
+                <span className="item-text">{`${formatDate(run.date)}: ${formatMiles(run.miles)} miles${run.source === 'strava' ? ' (Strava)' : ''}`}</span>
                 {kind && (
                   <span className="kind-label">
                     {kind === 'long' ? 'Long' : 'Easy'}
@@ -102,7 +102,7 @@ export const RunList = ({
                     <button
                       type="button"
                       className="dots"
-                      aria-label={`Actions for ${run.date} run`}
+                      aria-label={`Actions for ${formatDate(run.date)} run`}
                       aria-haspopup="menu"
                       aria-expanded={menuFor === run.id}
                       onClick={() =>
@@ -116,7 +116,7 @@ export const RunList = ({
                         <button
                           type="button"
                           role="menuitem"
-                          aria-label={`Edit ${run.date} run`}
+                          aria-label={`Edit ${formatDate(run.date)} run`}
                           onClick={() => {
                             setMenuFor(undefined)
                             onEdit(run)
@@ -128,7 +128,7 @@ export const RunList = ({
                           type="button"
                           role="menuitem"
                           className="danger"
-                          aria-label={`Delete ${run.date} run`}
+                          aria-label={`Delete ${formatDate(run.date)} run`}
                           onClick={() => {
                             setMenuFor(undefined)
                             setError(undefined)
