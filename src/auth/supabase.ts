@@ -1,9 +1,9 @@
 /**
  * supabase.ts: the real Auth, a thin wrapper over supabase-js.
  *
- * Kept too small to unit test; check it by signing in for real. The emailed
- * link sends you back to the page you started from, so that address must be in
- * Supabase's Redirect URLs. The session is saved in the browser by supabase-js.
+ * Kept too small to unit test; check it by signing in for real. The account
+ * is created by hand in the Supabase dashboard (sign-ups are off). The session
+ * is saved in the browser by supabase-js.
  */
 import type { User } from '@supabase/supabase-js'
 import { getSupabase } from '../lib/supabase'
@@ -24,18 +24,10 @@ export const createSupabaseAuth: () => Auth = () => ({
     )
     return () => data.subscription.unsubscribe()
   },
-  sendMagicLink: async (email) => {
-    const { error } = await getSupabase().auth.signInWithOtp({
+  signIn: async (email, password) => {
+    const { error } = await getSupabase().auth.signInWithPassword({
       email,
-      options: { emailRedirectTo: window.location.origin },
-    })
-    if (error) throw error
-  },
-  verifyCode: async (email, code) => {
-    const { error } = await getSupabase().auth.verifyOtp({
-      email,
-      token: code,
-      type: 'email',
+      password,
     })
     if (error) throw error
   },
