@@ -60,8 +60,12 @@ export const Dashboard = ({
 
   return (
     <>
-      <ThisWeek view={state.view} today={today} />
-      <WeekSchedule view={state.view} runs={state.runs} today={today} />
+      <WeekSchedule
+        view={state.view}
+        runs={state.runs}
+        today={today}
+        summary={<ThisWeek view={state.view} today={today} />}
+      />
       <section className="card">
         <h2>Runs</h2>
         <details open={editing ? true : undefined}>

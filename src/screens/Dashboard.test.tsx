@@ -355,14 +355,14 @@ describe('Dashboard: collapsed forms', () => {
 
   it('starts with every form collapsed', async () => {
     show(await seededStorage())
-    await screen.findByText('Week 2 of 19')
+    await screen.findByText('Edit availability')
     expect(document.querySelectorAll('details').length).toBe(3)
     expect(openStates()).toEqual([false, false, false])
   })
 
   it('opens the run form when you start editing a run', async () => {
     show(await seededStorage())
-    await screen.findByText('Week 2 of 19')
+    await screen.findByText('Edit availability')
     fireEvent.click(screen.getByRole('button', { name: 'Edit 2026-11-15 run' }))
     expect(screen.getByText('Edit run')).toBeInTheDocument()
     expect(openStates().filter(Boolean).length).toBe(1)
@@ -373,9 +373,65 @@ describe('Dashboard: collapsed forms', () => {
 
   it('labels the sections you can open', async () => {
     show(await seededStorage())
-    await screen.findByText('Week 2 of 19')
+    await screen.findByText('Edit availability')
     expect(screen.getByText('Log a run')).toBeInTheDocument()
     expect(screen.getByText('Add a check-in')).toBeInTheDocument()
     expect(screen.getByText('Edit availability')).toBeInTheDocument()
+  })
+})
+
+describe('Dashboard: week strip', () => {
+  it('shows this week as a strip above the week summary', async () => {
+    show(await seededStorage())
+    const strip = await screen.findByRole('group', { name: 'This week' })
+    const summary = screen.getByText('Week 2 of 19')
+    expect(
+      strip.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      screen.getByRole('group', { name: /Fri 2026-11-20: long run/ }),
+    ).toBeInTheDocument()
+  })
+
+  it('still shows the week summary before availability has loaded', async () => {
+    show(await seededStorage())
+    expect(await screen.findByText('Week 2 of 19')).toBeInTheDocument()
+  })
+
+  it('updates when you save availability', async () => {
+    show(await seededStorage())
+    await screen.findByRole('group', { name: /Fri 2026-11-20: long run/ })
+    fireEvent.change(screen.getByLabelText('Friday'), {
+      target: { value: 'off' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save availability' }))
+    await screen.findByText('Availability saved.')
+    expect(
+      screen.queryByRole('group', { name: /Fri 2026-11-20: long run/ }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Dashboard: week strip follows hand matches', () => {
+  it('shows a moved run on the day it was matched to', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    await storage.saveOverride('r1', 'w2-2')
+    show(storage)
+    expect(
+      await screen.findByRole('group', {
+        name: 'Wed 2026-11-18: easy run, 2.3 miles planned, done: ran 2.5 miles',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('group', {
+        name: 'Mon 2026-11-16: easy run, 2.3 miles planned, missed',
+      }),
+    ).toBeInTheDocument()
   })
 })

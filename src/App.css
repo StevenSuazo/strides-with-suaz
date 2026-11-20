@@ -156,3 +156,86 @@ details > summary {
 details > form {
   padding: 0 12px 12px;
 }
+
+/* Week strip */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin: 0 calc(var(--space) * -1) var(--space);
+  padding: 12px 8px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.week-strip .day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.week-strip .day-name {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.week-strip .day-date {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border-radius: 50%;
+}
+
+.week-strip .today .day-date {
+  color: var(--bg);
+  background: var(--text);
+}
+
+.week-strip .missed .day-date {
+  color: var(--missed-text);
+}
+
+.week-strip .dot,
+.week-strip .dot-space {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.week-strip .dot-easy {
+  background: #3b82f6;
+}
+
+.week-strip .dot-long {
+  background: #8b5cf6;
+}
+
+.week-strip .dot-done {
+  background: #22a35a;
+}
+
+.week-strip .dot-missed {
+  background: #e5484d;
+}
+
+.week-strip .dot-extra {
+  background: transparent;
+  border: 2px solid var(--muted);
+}
+
+.week-strip .day-miles {
+  min-height: 1.2em;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.week-strip .missed .day-miles {
+  color: var(--missed-text);
+}
