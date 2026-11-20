@@ -201,32 +201,9 @@ details > form {
   color: var(--missed-text);
 }
 
-.week-strip .dot,
 .week-strip .dot-space {
   width: 12px;
   height: 12px;
-  border-radius: 4px;
-}
-
-.week-strip .dot-easy {
-  background: #3b82f6;
-}
-
-.week-strip .dot-long {
-  background: #8b5cf6;
-}
-
-.week-strip .dot-done {
-  background: #22a35a;
-}
-
-.week-strip .dot-missed {
-  background: #e5484d;
-}
-
-.week-strip .dot-extra {
-  background: transparent;
-  border: 2px solid var(--muted);
 }
 
 .week-strip .day-miles {
@@ -238,4 +215,77 @@ details > form {
 
 .week-strip .missed .day-miles {
   color: var(--missed-text);
+}
+
+/* Coloured dots for run types: shared by the week strip and the run list */
+.dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.dot-easy {
+  background: #3b82f6;
+}
+
+.dot-long {
+  background: #8b5cf6;
+}
+
+.dot-done {
+  background: #22a35a;
+}
+
+.dot-missed {
+  background: #e5484d;
+}
+
+.dot-extra {
+  background: transparent;
+  border: 2px solid var(--muted);
+}
+
+/* Run list: type label and the three-dots menu */
+.kind-label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.run-menu {
+  position: relative;
+  margin-left: auto;
+}
+
+.items .run-menu .dots {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+  border-color: transparent;
+  background: transparent;
+}
+
+.run-menu .menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  padding: 4px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.18);
+}
+
+.items .run-menu .menu button {
+  justify-content: flex-start;
+  min-height: var(--tap);
+  text-align: left;
+  border-color: transparent;
 }

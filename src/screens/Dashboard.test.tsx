@@ -80,7 +80,10 @@ describe('Dashboard: runs', () => {
     const user = show(storage)
     await screen.findByText('Week 2 of 19')
     await user.click(
-      screen.getByRole('button', { name: 'Edit 2026-11-15 run' }),
+      screen.getByRole('button', { name: 'Actions for 2026-11-15 run' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit 2026-11-15 run' }),
     )
     const miles = screen.getByLabelText('Miles') as HTMLInputElement
     expect(miles.value).toBe('4.01')
@@ -97,7 +100,10 @@ describe('Dashboard: runs', () => {
     const user = show(await seededStorage())
     await screen.findByText('Week 2 of 19')
     await user.click(
-      screen.getByRole('button', { name: 'Edit 2026-11-15 run' }),
+      screen.getByRole('button', { name: 'Actions for 2026-11-15 run' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit 2026-11-15 run' }),
     )
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(screen.getByRole('button', { name: 'Log run' })).toBeInTheDocument()
@@ -115,7 +121,10 @@ describe('Dashboard: runs', () => {
     const user = show(storage)
     await screen.findByText('3 of 9.3 miles so far')
     await user.click(
-      screen.getByRole('button', { name: 'Delete 2026-11-17 run' }),
+      screen.getByRole('button', { name: 'Actions for 2026-11-17 run' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Delete 2026-11-17 run' }),
     )
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(await screen.findByText('0 of 9.3 miles so far')).toBeInTheDocument()
@@ -128,7 +137,10 @@ describe('Dashboard: runs', () => {
     const user = show(storage)
     await screen.findByText('Target: 9.3 miles')
     await user.click(
-      screen.getByRole('button', { name: 'Edit 2026-11-15 run' }),
+      screen.getByRole('button', { name: 'Actions for 2026-11-15 run' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit 2026-11-15 run' }),
     )
     const miles = screen.getByLabelText('Miles') as HTMLInputElement
     await user.clear(miles)
@@ -363,7 +375,12 @@ describe('Dashboard: collapsed forms', () => {
   it('opens the run form when you start editing a run', async () => {
     show(await seededStorage())
     await screen.findByText('Edit availability')
-    fireEvent.click(screen.getByRole('button', { name: 'Edit 2026-11-15 run' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Actions for 2026-11-15 run' }),
+    )
+    fireEvent.click(
+      screen.getByRole('menuitem', { name: 'Edit 2026-11-15 run' }),
+    )
     expect(screen.getByText('Edit run')).toBeInTheDocument()
     expect(openStates().filter(Boolean).length).toBe(1)
     expect(
@@ -433,5 +450,42 @@ describe('Dashboard: week strip follows hand matches', () => {
         name: 'Mon 2026-11-16: easy run, 2.3 miles planned, missed',
       }),
     ).toBeInTheDocument()
+  })
+})
+
+describe('Dashboard: run types', () => {
+  it("marks last week's longest run as long", async () => {
+    show(await seededStorage())
+    await screen.findByText('Edit availability')
+    const items = screen
+      .getAllByRole('listitem')
+      .filter((li) => li.querySelector('.run-menu'))
+      .map((li) => li.textContent)
+    const long = items.find((t) => t?.includes('2026-11-15: 4.01 miles'))
+    const easy = items.find((t) => t?.includes('2026-11-11: 2.5 miles'))
+    expect(long).toContain('Long')
+    expect(easy).toContain('Easy')
+  })
+
+  it('uses the planned type for a run matched this week', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    show(storage)
+    await screen.findByText('Done: ran 2.5 miles')
+    const item = screen
+      .getAllByRole('listitem')
+      .find(
+        (li) =>
+          li.querySelector('.run-menu') &&
+          li.textContent?.includes('2026-11-16: 2.5 miles'),
+      )
+    // Alone this week it is the longest run, but it was planned as an easy run.
+    expect(item?.textContent).toContain('Easy')
+    expect(item?.querySelector('.dot-easy')).not.toBeNull()
   })
 })

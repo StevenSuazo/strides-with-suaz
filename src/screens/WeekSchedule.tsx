@@ -9,9 +9,9 @@
  * up against the runs you logged, and can be re-paired by hand. It does not change the gate, which
  * only looks at miles and pain.
  */
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { placeRuns, weekStartDate } from '../engine'
-import type { IsoDate, Run, WeekAvailability } from '../engine/types'
+import type { IsoDate, Run, RunKind, WeekAvailability } from '../engine/types'
 import type { PlanView } from '../plan/progress'
 import { PLAN } from '../plan/settings'
 import { matchWeek, overrideWrites } from '../plan/weekMatch'
@@ -21,17 +21,20 @@ import { PlannedWeek } from './PlannedWeek'
 import { WeekStrip } from './WeekStrip'
 
 const ALL_OPEN: WeekAvailability = Array(7).fill('open')
+const NO_KINDS: Record<string, RunKind> = {}
 
 export const WeekSchedule = ({
   view,
   runs,
   today,
   summary,
+  onMatchedKinds,
 }: {
   view: PlanView
   runs: Run[]
   today: IsoDate
   summary: ReactNode
+  onMatchedKinds: (kinds: Record<string, RunKind>) => void
 }) => {
   const storage = useStorage()
   const weekIndex = view.status === 'inProgress' ? view.weekIndex : undefined
@@ -63,6 +66,40 @@ export const WeekSchedule = ({
     }
   }, [storage, weekIndex])
 
+  const ready = loaded && loaded.weekIndex === weekIndex ? loaded : undefined
+  const week = useMemo(() => {
+    if (weekIndex === undefined || !view.target || !ready) return undefined
+    const weekStart = weekStartDate(weekIndex, PLAN.startDate)
+    return {
+      weekStart,
+      ...matchWeek({
+        weekIndex,
+        weekStart,
+        planned: placeRuns(view.target, ready.availability).runs,
+        runs,
+        overrides: ready.overrides,
+        today,
+      }),
+    }
+  }, [weekIndex, view.target, ready, runs, today])
+
+  // Tell the parent which logged runs this week matched, and the planned type
+  // of each, so the run list can use the same easy/long colours as the strip.
+  const matchedKinds = useMemo(
+    () =>
+      week
+        ? Object.fromEntries(
+            week.rows.flatMap((row) =>
+              row.run ? [[row.run.id, row.workout.kind] as const] : [],
+            ),
+          )
+        : NO_KINDS,
+    [week],
+  )
+  useEffect(() => {
+    onMatchedKinds(matchedKinds)
+  }, [matchedKinds, onMatchedKinds])
+
   // The {false} slots keep the summary in the same position in every state, so
   // it is not rebuilt when the strip and planned runs appear around it.
   if (weekIndex === undefined || !view.target)
@@ -82,7 +119,7 @@ export const WeekSchedule = ({
       </>
     )
   }
-  if (!loaded || loaded.weekIndex !== weekIndex) {
+  if (!ready || !week) {
     return (
       <>
         {false}
@@ -92,23 +129,13 @@ export const WeekSchedule = ({
     )
   }
 
-  const weekStart = weekStartDate(weekIndex, PLAN.startDate)
-  const week = matchWeek({
-    weekIndex,
-    weekStart,
-    planned: placeRuns(view.target, loaded.availability).runs,
-    runs,
-    overrides: loaded.overrides,
-    today,
-  })
-
   const save = async (availability: WeekAvailability) => {
     await storage.saveAvailability(weekIndex, availability)
     setLoaded((current) => current && { ...current, availability })
   }
 
   const match = async (workoutId: string, runId: string) => {
-    const writes = overrideWrites(loaded.overrides, workoutId, runId)
+    const writes = overrideWrites(ready.overrides, workoutId, runId)
     for (const [id, workout] of writes) await storage.saveOverride(id, workout)
     setLoaded(
       (current) =>
@@ -122,7 +149,7 @@ export const WeekSchedule = ({
   return (
     <>
       <WeekStrip
-        weekStart={weekStart}
+        weekStart={week.weekStart}
         rows={week.rows}
         extraRuns={week.extraRuns}
         today={today}
@@ -132,18 +159,18 @@ export const WeekSchedule = ({
         <h2>Planned runs</h2>
         <PlannedWeek
           target={view.target}
-          availability={loaded.availability}
-          weekStart={weekStart}
+          availability={ready.availability}
+          weekStart={week.weekStart}
           today={today}
           runs={runs}
-          overrides={loaded.overrides}
+          overrides={ready.overrides}
           onMatch={match}
         />
         <details>
           <summary>Edit availability</summary>
           <AvailabilityEditor
-            key={loaded.weekIndex}
-            value={loaded.availability}
+            key={ready.weekIndex}
+            value={ready.availability}
             onSave={save}
           />
         </details>

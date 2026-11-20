@@ -7,7 +7,9 @@
  * newId makes ids for new runs and can be replaced in tests.
  */
 import { useState } from 'react'
-import type { CheckIn, IsoDate, Run } from '../engine/types'
+import type { CheckIn, IsoDate, Run, RunKind } from '../engine/types'
+import { runKinds } from '../plan/runKinds'
+import { PLAN } from '../plan/settings'
 import { usePlan } from '../plan/usePlan'
 import { useStorage } from '../storage/useStorage'
 import { BackupButton } from './BackupButton'
@@ -30,11 +32,16 @@ export const Dashboard = ({
   const storage = useStorage()
   const { state, reload } = usePlan(today)
   const [editing, setEditing] = useState<Run | undefined>()
+  const [matchedKinds, setMatchedKinds] = useState<Record<string, RunKind>>({})
 
   if (state.status === 'loading') return <p>Loading your plan…</p>
   if (state.status === 'error') {
     return <p role="alert">{`Couldn't load your plan: ${state.message}`}</p>
   }
+
+  // Runs matched to this week's plan take the planned type; the rest use the
+  // longest-run-of-the-week rule.
+  const kinds = { ...runKinds(state.runs, PLAN.startDate), ...matchedKinds }
 
   const save = async (run: Run) => {
     await storage.saveRun(run)
@@ -65,6 +72,7 @@ export const Dashboard = ({
         runs={state.runs}
         today={today}
         summary={<ThisWeek view={state.view} today={today} />}
+        onMatchedKinds={setMatchedKinds}
       />
       <section className="card">
         <h2>Runs</h2>
@@ -79,7 +87,12 @@ export const Dashboard = ({
             onCancel={() => setEditing(undefined)}
           />
         </details>
-        <RunList runs={state.runs} onEdit={setEditing} onDelete={remove} />
+        <RunList
+          runs={state.runs}
+          kinds={kinds}
+          onEdit={setEditing}
+          onDelete={remove}
+        />
       </section>
       <section className="card">
         <h2>Check-ins</h2>
