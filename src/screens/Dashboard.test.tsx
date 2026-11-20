@@ -489,3 +489,40 @@ describe('Dashboard: run types', () => {
     expect(runItem()?.querySelector('.dot-long')).toBeNull()
   })
 })
+
+describe('Dashboard: progress chart', () => {
+  it('shows the plan chart between this week and the planned runs', async () => {
+    show(await seededStorage())
+    const chart = await screen.findByRole('heading', { name: 'Your plan' })
+    const week = screen.getByText('Week 2 of 19')
+    const planned = await screen.findByRole('heading', { name: 'Planned runs' })
+    const follows = (a: Node, b: Node) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(follows(week, chart)).toBe(true)
+    expect(follows(chart, planned)).toBe(true)
+  })
+
+  it("shows this week's bar and last week's result", async () => {
+    show(await seededStorage())
+    await screen.findByRole('heading', { name: 'Your plan' })
+    const svg = screen.getByRole('img', {
+      name: 'Weekly miles: target and actual',
+    })
+    expect(svg.querySelectorAll('.bar-hit')).toHaveLength(1)
+    expect(svg.querySelectorAll('.bar-current')).toHaveLength(1)
+  })
+
+  it('updates when you log a run', async () => {
+    const user = show(await seededStorage())
+    await screen.findByRole('heading', { name: 'Your plan' })
+    const svg = () =>
+      screen.getByRole('img', { name: 'Weekly miles: target and actual' })
+    const height = () =>
+      Number(svg().querySelector('.bar-current')?.getAttribute('height'))
+    const before = height()
+    await user.click(screen.getByText('Log a run'))
+    await user.type(screen.getByLabelText('Miles'), '3')
+    await user.click(screen.getByRole('button', { name: 'Log run' }))
+    await waitFor(() => expect(height()).toBeGreaterThan(before))
+  })
+})

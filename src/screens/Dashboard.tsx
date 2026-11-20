@@ -16,6 +16,7 @@ import { BackupButton } from './BackupButton'
 import { CheckInForm } from './CheckInForm'
 import { CheckInList } from './CheckInList'
 import { LogRunForm } from './LogRunForm'
+import { ProgressChart } from './ProgressChart'
 import { RunList } from './RunList'
 import { WeekSchedule } from './WeekSchedule'
 import { ThisWeek } from './ThisWeek'
@@ -71,7 +72,12 @@ export const Dashboard = ({
         view={state.view}
         runs={state.runs}
         today={today}
-        summary={<ThisWeek view={state.view} today={today} />}
+        summary={
+          <>
+            <ThisWeek view={state.view} today={today} />
+            <ProgressChart view={state.view} />
+          </>
+        }
         onMatchedKinds={setMatchedKinds}
       />
       <section className="card">
