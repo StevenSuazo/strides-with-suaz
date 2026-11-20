@@ -31,6 +31,14 @@ export const createSupabaseAuth: () => Auth = () => ({
     })
     if (error) throw error
   },
+  verifyCode: async (email, code) => {
+    const { error } = await getSupabase().auth.verifyOtp({
+      email,
+      token: code,
+      type: 'email',
+    })
+    if (error) throw error
+  },
   signOut: async () => {
     const { error } = await getSupabase().auth.signOut()
     if (error) throw error

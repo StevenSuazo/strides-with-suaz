@@ -49,7 +49,9 @@ describe('LoginGate', () => {
     await user.click(screen.getByRole('button', { name: 'Send magic link' }))
     expect(auth.sentLinks).toEqual(['me@example.com'])
     expect(
-      await screen.findByText('Check your email for a sign-in link.'),
+      await screen.findByText(
+        'Check your email for a sign-in link or a 6-digit code.',
+      ),
     ).toBeInTheDocument()
   })
 
@@ -62,7 +64,9 @@ describe('LoginGate', () => {
     expect(await screen.findByText('Rate limit hit')).toBeInTheDocument()
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
     expect(
-      screen.queryByText('Check your email for a sign-in link.'),
+      screen.queryByText(
+        'Check your email for a sign-in link or a 6-digit code.',
+      ),
     ).not.toBeInTheDocument()
   })
 
@@ -124,5 +128,77 @@ describe('LoginGate', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('The app')).not.toBeInTheDocument()
+  })
+
+  const sendTo = async (
+    user: ReturnType<typeof userEvent.setup>,
+    email = 'me@example.com',
+  ) => {
+    await user.type(await screen.findByLabelText('Email'), email)
+    await user.click(screen.getByRole('button', { name: 'Send magic link' }))
+  }
+
+  it('asks for the code only after the email is sent', async () => {
+    const user = userEvent.setup()
+    renderGate(createMemoryAuth())
+    await screen.findByLabelText('Email')
+    expect(screen.queryByLabelText('6-digit code')).not.toBeInTheDocument()
+    await sendTo(user)
+    expect(await screen.findByLabelText('6-digit code')).toBeInTheDocument()
+  })
+
+  it('signs in with the code from the email', async () => {
+    const user = userEvent.setup()
+    renderGate(createMemoryAuth())
+    await sendTo(user)
+    await user.type(await screen.findByLabelText('6-digit code'), '123456')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByText('The app')).toBeInTheDocument()
+  })
+
+  it('trims spaces around the code', async () => {
+    const user = userEvent.setup()
+    renderGate(createMemoryAuth())
+    await sendTo(user)
+    await user.type(await screen.findByLabelText('6-digit code'), ' 123456 ')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByText('The app')).toBeInTheDocument()
+  })
+
+  it('shows why a wrong code failed and lets you try again', async () => {
+    const user = userEvent.setup()
+    renderGate(createMemoryAuth())
+    await sendTo(user)
+    await user.type(await screen.findByLabelText('6-digit code'), '000000')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByText('Invalid code')).toBeInTheDocument()
+    expect(screen.queryByText('The app')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('6-digit code')).toBeInTheDocument()
+  })
+
+  it('rejects an empty or non-numeric code without asking the server', async () => {
+    const user = userEvent.setup()
+    renderGate(createMemoryAuth())
+    await sendTo(user)
+    await user.click(await screen.findByRole('button', { name: 'Sign in' }))
+    expect(
+      await screen.findByText('Enter the code from your email.'),
+    ).toBeInTheDocument()
+    await user.type(screen.getByLabelText('6-digit code'), 'abc')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(
+      await screen.findByText('Enter the code from your email.'),
+    ).toBeInTheDocument()
+  })
+
+  it('lets you go back and use a different email', async () => {
+    const user = userEvent.setup()
+    renderGate(createMemoryAuth())
+    await sendTo(user)
+    await user.click(
+      await screen.findByRole('button', { name: 'Use a different email' }),
+    )
+    expect(await screen.findByLabelText('Email')).toBeInTheDocument()
+    expect(screen.queryByLabelText('6-digit code')).not.toBeInTheDocument()
   })
 })
