@@ -288,3 +288,63 @@ describe('Dashboard: schedule', () => {
     ).not.toBeInTheDocument()
   })
 })
+
+describe('Dashboard: planned vs done', () => {
+  const withRun = async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard today="2026-11-17" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    return storage
+  }
+
+  it('shows a logged run as done on its planned day', async () => {
+    await withRun()
+    expect(await screen.findByText('Done: ran 2.5 miles')).toBeInTheDocument()
+  })
+
+  it('moves a run to another planned day and saves the override', async () => {
+    const storage = await withRun()
+    await screen.findByText('Done: ran 2.5 miles')
+    fireEvent.change(screen.getByLabelText('Run for Wed 2026-11-18'), {
+      target: { value: 'r1' },
+    })
+    await waitFor(async () =>
+      expect(await storage.getOverrides()).toEqual({ r1: 'w2-2' }),
+    )
+    expect(
+      (screen.getByLabelText('Run for Wed 2026-11-18') as HTMLSelectElement)
+        .value,
+    ).toBe('r1')
+    expect(screen.getByText('Missed')).toBeInTheDocument()
+  })
+
+  it('remembers a saved override after a reload', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    await storage.saveOverride('r1', 'w2-2')
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard today="2026-11-17" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    await screen.findByText('Done: ran 2.5 miles')
+    expect(
+      (screen.getByLabelText('Run for Wed 2026-11-18') as HTMLSelectElement)
+        .value,
+    ).toBe('r1')
+  })
+})
