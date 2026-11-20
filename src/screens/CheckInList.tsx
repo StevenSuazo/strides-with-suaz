@@ -58,17 +58,18 @@ export const CheckInList = ({
 
   return (
     <>
-      <ul>
+      <ul className="items">
         {[...checkIns]
           .sort(newestFirst)
           .slice(0, SHOWN)
           .map((checkIn) => (
             <li key={checkIn.id}>
-              {describe(checkIn)}
+              <span className="item-text">{describe(checkIn)}</span>
               {confirming === checkIn.id ? (
                 <>
                   <button
                     type="button"
+                    className="danger"
                     onClick={() => void confirmDelete(checkIn.id)}
                   >
                     Confirm delete

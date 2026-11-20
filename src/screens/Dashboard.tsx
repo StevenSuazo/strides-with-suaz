@@ -62,24 +62,30 @@ export const Dashboard = ({
     <>
       <ThisWeek view={state.view} today={today} />
       <WeekSchedule view={state.view} runs={state.runs} today={today} />
-      <section>
+      <section className="card">
         <h2>Runs</h2>
-        <LogRunForm
-          key={editing?.id ?? 'new'}
-          today={today}
-          editing={editing}
-          newId={newId}
-          onSave={save}
-          onCancel={() => setEditing(undefined)}
-        />
+        <details open={editing ? true : undefined}>
+          <summary>{editing ? 'Edit run' : 'Log a run'}</summary>
+          <LogRunForm
+            key={editing?.id ?? 'new'}
+            today={today}
+            editing={editing}
+            newId={newId}
+            onSave={save}
+            onCancel={() => setEditing(undefined)}
+          />
+        </details>
         <RunList runs={state.runs} onEdit={setEditing} onDelete={remove} />
       </section>
-      <section>
+      <section className="card">
         <h2>Check-ins</h2>
-        <CheckInForm today={today} newId={newId} onSave={saveCheckIn} />
+        <details>
+          <summary>Add a check-in</summary>
+          <CheckInForm today={today} newId={newId} onSave={saveCheckIn} />
+        </details>
         <CheckInList checkIns={state.checkIns} onDelete={removeCheckIn} />
       </section>
-      <section>
+      <section className="card">
         <h2>Backup</h2>
         <BackupButton today={today} />
       </section>

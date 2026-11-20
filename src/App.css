@@ -1,18 +1,158 @@
+/* App.css: layout and the pieces of each screen. */
 main {
-  padding: 0 16px 48px;
-  text-align: left;
+  padding: var(--space) var(--space) 48px;
 }
 
-.this-week p {
-  margin: 4px 0;
+main > h1 {
+  margin: 8px 0 var(--space);
+}
+
+.app-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px var(--space);
+  color: var(--muted);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-bar span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-bar button {
+  min-height: 36px;
+  padding: 4px 12px;
+  font-weight: 500;
+}
+
+.card {
+  margin-bottom: var(--space);
+  padding: var(--space);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.login {
+  max-width: 420px;
+  margin: 48px var(--space) 0;
+}
+
+/* This week */
+.this-week .countdown {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.this-week .stat {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.this-week .stat:first-of-type {
+  margin-top: 12px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.this-week .progress-label {
+  margin-top: 12px;
+  font-weight: 600;
 }
 
 .this-week progress {
   width: 100%;
-  margin: 8px 0;
+  height: 12px;
+  margin: 6px 0 12px;
+  accent-color: var(--accent);
 }
 
-.this-week ul {
-  padding-left: 20px;
-  margin: 8px 0;
+/* Lists of runs, check-ins and planned runs */
+.items {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.items li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.items li:first-child {
+  border-top: 0;
+}
+
+.items .item-text {
+  flex: 1 1 200px;
+}
+
+.items button {
+  min-height: 36px;
+  padding: 4px 12px;
+  font-weight: 500;
+}
+
+.items select {
+  width: auto;
+  min-height: 36px;
+  flex: 1 1 100%;
+}
+
+.chip {
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.chip-done {
+  color: var(--done-text);
+  background: var(--done-bg);
+}
+
+.chip-missed {
+  color: var(--missed-text);
+  background: var(--missed-bg);
+}
+
+.chip-upcoming {
+  color: var(--upcoming-text);
+  background: var(--upcoming-bg);
+}
+
+/* Collapsed forms */
+details {
+  margin: 8px 0 12px;
+  background: var(--accent-soft);
+  border-radius: var(--radius-small);
+}
+
+details > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 12px;
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+details > form {
+  padding: 0 12px 12px;
 }

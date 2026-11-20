@@ -64,13 +64,13 @@ export const PlannedWeek = ({
       {rows.length === 0 ? (
         <p>No runs planned this week.</p>
       ) : (
-        <ul>
+        <ul className="items">
           {rows.map(({ workout, dayIndex, status, run }) => {
             const name = `${DAY_NAMES[dayIndex]} ${dateOfDay(weekStart, dayIndex)}`
             return (
               <li key={workout.id}>
-                <span>{`${name}: ${workout.kind} run, ${formatMiles(workout.miles)} miles`}</span>{' '}
-                <span>
+                <span className="item-text">{`${name}: ${workout.kind} run, ${formatMiles(workout.miles)} miles`}</span>{' '}
+                <span className={`chip chip-${status}`}>
                   {status === 'done' && run
                     ? `Done: ran ${formatMiles(run.miles)} miles`
                     : status === 'missed'
@@ -104,7 +104,7 @@ export const PlannedWeek = ({
       {extraRuns.length > 0 && (
         <>
           <h3>Extra runs</h3>
-          <ul>
+          <ul className="items">
             {extraRuns.map((run) => (
               <li
                 key={run.id}

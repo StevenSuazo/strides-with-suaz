@@ -40,17 +40,18 @@ export const RunList = ({
 
   return (
     <>
-      <ul>
+      <ul className="items">
         {[...runs]
           .sort(newestFirst)
           .slice(0, SHOWN)
           .map((run) => (
             <li key={run.id}>
-              {`${run.date}: ${formatMiles(run.miles)} miles${run.source === 'strava' ? ' (Strava)' : ''}`}
+              <span className="item-text">{`${run.date}: ${formatMiles(run.miles)} miles${run.source === 'strava' ? ' (Strava)' : ''}`}</span>
               {confirming === run.id ? (
                 <>
                   <button
                     type="button"
+                    className="danger"
                     onClick={() => void confirmDelete(run.id)}
                   >
                     Confirm delete

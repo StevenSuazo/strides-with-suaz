@@ -348,3 +348,34 @@ describe('Dashboard: planned vs done', () => {
     ).toBe('r1')
   })
 })
+
+describe('Dashboard: collapsed forms', () => {
+  const openStates = () =>
+    Array.from(document.querySelectorAll('details')).map((d) => d.open)
+
+  it('starts with every form collapsed', async () => {
+    show(await seededStorage())
+    await screen.findByText('Week 2 of 19')
+    expect(document.querySelectorAll('details').length).toBe(3)
+    expect(openStates()).toEqual([false, false, false])
+  })
+
+  it('opens the run form when you start editing a run', async () => {
+    show(await seededStorage())
+    await screen.findByText('Week 2 of 19')
+    fireEvent.click(screen.getByRole('button', { name: 'Edit 2026-11-15 run' }))
+    expect(screen.getByText('Edit run')).toBeInTheDocument()
+    expect(openStates().filter(Boolean).length).toBe(1)
+    expect(
+      screen.getByRole('button', { name: 'Save changes' }),
+    ).toBeInTheDocument()
+  })
+
+  it('labels the sections you can open', async () => {
+    show(await seededStorage())
+    await screen.findByText('Week 2 of 19')
+    expect(screen.getByText('Log a run')).toBeInTheDocument()
+    expect(screen.getByText('Add a check-in')).toBeInTheDocument()
+    expect(screen.getByText('Edit availability')).toBeInTheDocument()
+  })
+})

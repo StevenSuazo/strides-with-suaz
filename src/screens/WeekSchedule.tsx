@@ -81,7 +81,7 @@ export const WeekSchedule = ({
   }
 
   return (
-    <section>
+    <section className="card">
       <h2>Planned runs</h2>
       <PlannedWeek
         target={view.target}
@@ -92,11 +92,14 @@ export const WeekSchedule = ({
         overrides={loaded.overrides}
         onMatch={match}
       />
-      <AvailabilityEditor
-        key={loaded.weekIndex}
-        value={loaded.availability}
-        onSave={save}
-      />
+      <details>
+        <summary>Edit availability</summary>
+        <AvailabilityEditor
+          key={loaded.weekIndex}
+          value={loaded.availability}
+          onSave={save}
+        />
+      </details>
     </section>
   )
 }
