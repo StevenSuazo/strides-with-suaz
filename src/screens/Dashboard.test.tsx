@@ -475,15 +475,17 @@ describe('Dashboard: run types', () => {
     })
     show(storage)
     await screen.findByText('Done: ran 2.5 miles')
-    const item = screen
-      .getAllByRole('listitem')
-      .find(
-        (li) =>
-          li.querySelector('.run-menu') &&
-          li.textContent?.includes('Mon, Nov 16: 2.5 miles'),
-      )
+    const runItem = () =>
+      screen
+        .getAllByRole('listitem')
+        .find(
+          (li) =>
+            li.querySelector('.run-menu') &&
+            li.textContent?.includes('Mon, Nov 16: 2.5 miles'),
+        )
     // Alone this week it is the longest run, but it was planned as an easy run.
-    expect(item?.textContent).toContain('Easy')
-    expect(item?.querySelector('.dot-easy')).not.toBeNull()
+    await waitFor(() => expect(runItem()?.textContent).toContain('Easy'))
+    expect(runItem()?.querySelector('.dot-easy')).not.toBeNull()
+    expect(runItem()?.querySelector('.dot-long')).toBeNull()
   })
 })

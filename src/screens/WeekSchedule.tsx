@@ -9,7 +9,13 @@
  * up against the runs you logged, and can be re-paired by hand. It does not change the gate, which
  * only looks at miles and pain.
  */
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import { placeRuns, weekStartDate } from '../engine'
 import type { IsoDate, Run, RunKind, WeekAvailability } from '../engine/types'
 import type { PlanView } from '../plan/progress'
@@ -85,6 +91,7 @@ export const WeekSchedule = ({
 
   // Tell the parent which logged runs this week matched, and the planned type
   // of each, so the run list can use the same easy/long colours as the strip.
+  // A layout effect, so the list is corrected before the screen is painted.
   const matchedKinds = useMemo(
     () =>
       week
@@ -96,7 +103,7 @@ export const WeekSchedule = ({
         : NO_KINDS,
     [week],
   )
-  useEffect(() => {
+  useLayoutEffect(() => {
     onMatchedKinds(matchedKinds)
   }, [matchedKinds, onMatchedKinds])
 
