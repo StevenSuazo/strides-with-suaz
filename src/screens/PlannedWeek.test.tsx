@@ -1,21 +1,40 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { WeekAvailability, WeekTarget } from '../engine/types'
+import type { Run, WeekAvailability, WeekTarget } from '../engine/types'
 import { PlannedWeek } from './PlannedWeek'
 
 const target: WeekTarget = { weekIndex: 2, targetMiles: 9.3, longRunMiles: 4.7 }
 const allOpen: WeekAvailability = Array(7).fill('open')
+const run = (id: string, date: string, miles: number): Run => ({
+  id,
+  date,
+  miles,
+  source: 'in_app',
+})
 
-const show = (availability: WeekAvailability, t: WeekTarget = target) =>
+const show = (
+  availability: WeekAvailability,
+  extra: {
+    target?: WeekTarget
+    runs?: Run[]
+    today?: string
+    overrides?: Record<string, string>
+    onMatch?: (workoutId: string, runId: string) => Promise<void>
+  } = {},
+) =>
   render(
     <PlannedWeek
-      target={t}
+      target={extra.target ?? target}
       availability={availability}
       weekStart="2026-11-16"
+      today={extra.today ?? '2026-11-17'}
+      runs={extra.runs ?? []}
+      overrides={extra.overrides ?? {}}
+      onMatch={extra.onMatch ?? (async () => {})}
     />,
   )
 
-describe('PlannedWeek', () => {
+describe('PlannedWeek: the plan', () => {
   it('lists each planned run with its day and date', () => {
     show(allOpen)
     expect(
@@ -45,9 +64,7 @@ describe('PlannedWeek', () => {
 
   it('shows the planner notes', () => {
     show(['off', 'off', 'off', 'off', 'morning', 'off', 'off'], {
-      weekIndex: 2,
-      targetMiles: 12,
-      longRunMiles: 8,
+      target: { weekIndex: 2, targetMiles: 12, longRunMiles: 8 },
     })
     expect(
       screen.getByText(
@@ -58,9 +75,7 @@ describe('PlannedWeek', () => {
 
   it('says how many miles could not be placed', () => {
     show(['off', 'off', 'off', 'off', 'morning', 'off', 'off'], {
-      weekIndex: 2,
-      targetMiles: 20,
-      longRunMiles: 10,
+      target: { weekIndex: 2, targetMiles: 20, longRunMiles: 10 },
     })
     expect(screen.getByText(/Short by \d+(\.\d+)? miles?/)).toBeInTheDocument()
   })
@@ -68,5 +83,97 @@ describe('PlannedWeek', () => {
   it('says so when no runs can be planned', () => {
     show(Array(7).fill('off'))
     expect(screen.getByText('No runs planned this week.')).toBeInTheDocument()
+  })
+})
+
+describe('PlannedWeek: done, missed and coming up', () => {
+  it('shows done with the miles actually run', () => {
+    show(allOpen, { runs: [run('a', '2026-11-16', 2.5)] })
+    expect(screen.getByText('Done: ran 2.5 miles')).toBeInTheDocument()
+  })
+
+  it('shows missed for a past day with no run', () => {
+    show(allOpen)
+    expect(screen.getAllByText('Missed').length).toBe(1)
+  })
+
+  it('shows coming up for today and later days', () => {
+    show(allOpen)
+    expect(screen.getAllByText('Coming up').length).toBe(2)
+  })
+
+  it('lists extra runs that matched nothing', () => {
+    show(allOpen, { runs: [run('x', '2026-11-21', 3.25)] })
+    expect(
+      screen.getByRole('heading', { name: 'Extra runs' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('listitem').map((li) => li.textContent),
+    ).toContain('2026-11-21: 3.25 miles')
+  })
+
+  it('has no extra runs heading when everything matched', () => {
+    show(allOpen, { runs: [run('a', '2026-11-16', 2.5)] })
+    expect(
+      screen.queryByRole('heading', { name: 'Extra runs' }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('PlannedWeek: matching by hand', () => {
+  it('has no match dropdowns when there are no runs this week', () => {
+    show(allOpen)
+    expect(
+      screen.queryByLabelText('Run for Mon 2026-11-16'),
+    ).not.toBeInTheDocument()
+  })
+
+  it("offers this week's runs and shows the matched one", () => {
+    show(allOpen, {
+      runs: [run('a', '2026-11-16', 2.5), run('b', '2026-11-21', 3)],
+    })
+    const select = screen.getByLabelText(
+      'Run for Mon 2026-11-16',
+    ) as HTMLSelectElement
+    expect(Array.from(select.options).map((o) => o.text)).toEqual([
+      'Match to…',
+      '2026-11-16: 2.5 miles',
+      '2026-11-21: 3 miles',
+    ])
+    expect(select.value).toBe('a')
+    expect(
+      (screen.getByLabelText('Run for Wed 2026-11-18') as HTMLSelectElement)
+        .value,
+    ).toBe('')
+  })
+
+  it('calls onMatch with the workout and run when you pick one', async () => {
+    const calls: [string, string][] = []
+    show(allOpen, {
+      runs: [run('b', '2026-11-21', 3)],
+      onMatch: async (w, r) => {
+        calls.push([w, r])
+      },
+    })
+    fireEvent.change(screen.getByLabelText('Run for Wed 2026-11-18'), {
+      target: { value: 'b' },
+    })
+    await screen.findByLabelText('Run for Wed 2026-11-18')
+    expect(calls).toEqual([['w2-2', 'b']])
+  })
+
+  it('shows the reason when matching fails', async () => {
+    show(allOpen, {
+      runs: [run('b', '2026-11-21', 3)],
+      onMatch: async () => {
+        throw new Error('offline')
+      },
+    })
+    fireEvent.change(screen.getByLabelText('Run for Wed 2026-11-18'), {
+      target: { value: 'b' },
+    })
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      "Couldn't match the run: offline",
+    )
   })
 })

@@ -61,7 +61,7 @@ export const Dashboard = ({
   return (
     <>
       <ThisWeek view={state.view} today={today} />
-      <WeekSchedule view={state.view} />
+      <WeekSchedule view={state.view} runs={state.runs} today={today} />
       <section>
         <h2>Runs</h2>
         <LogRunForm
