@@ -1,10 +1,24 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { StorageProvider } from '../storage/StorageProvider'
 import type { AppStorage } from '../storage/types'
 import { emptyStorage, seededStorage } from '../test/fixtures'
 import { Dashboard } from './Dashboard'
+
+// The Planned runs card only, since the today card can repeat a run's words.
+const plannedRuns = () =>
+  within(
+    screen
+      .getByRole('heading', { name: 'Planned runs' })
+      .closest('section') as HTMLElement,
+  )
 
 const show = (storage: AppStorage) => {
   let count = 0
@@ -238,7 +252,7 @@ describe('Dashboard: schedule', () => {
     expect(
       screen.queryByText('Fri, Nov 20: long run, 4.7 miles'),
     ).not.toBeInTheDocument()
-    expect(screen.getByText(/long run, 4\.7 miles/)).toBeInTheDocument()
+    expect(plannedRuns().getByText(/long run, 4\.7 miles/)).toBeInTheDocument()
   })
 
   it('stores the availability for this week in storage', async () => {
@@ -248,7 +262,7 @@ describe('Dashboard: schedule', () => {
         <Dashboard today="2026-11-17" newId={() => 'x'} />
       </StorageProvider>,
     )
-    await screen.findByText(/long run, 4\.7 miles/)
+    await screen.findByRole('heading', { name: 'Planned runs' })
     fireEvent.change(screen.getByLabelText('Friday'), {
       target: { value: 'off' },
     })
@@ -281,7 +295,7 @@ describe('Dashboard: schedule', () => {
         <Dashboard today="2026-11-17" newId={() => 'x'} />
       </StorageProvider>,
     )
-    await screen.findByText(/long run, 4\.7 miles/)
+    await screen.findByRole('heading', { name: 'Planned runs' })
     expect((screen.getByLabelText('Friday') as HTMLSelectElement).value).toBe(
       'off',
     )
@@ -524,5 +538,52 @@ describe('Dashboard: progress chart', () => {
     await user.type(screen.getByLabelText('Miles'), '3')
     await user.click(screen.getByRole('button', { name: 'Log run' }))
     await waitFor(() => expect(height()).toBeGreaterThan(before))
+  })
+})
+
+describe('Dashboard: today card', () => {
+  const showOn = async (today: string, storage?: AppStorage) => {
+    render(
+      <StorageProvider storage={storage ?? (await seededStorage())}>
+        <Dashboard today={today} newId={() => 'x'} />
+      </StorageProvider>,
+    )
+  }
+  const follows = (a: Node, b: Node) =>
+    Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+  it("shows today's workout between the strip and the week summary", async () => {
+    await showOn('2026-11-18')
+    const heading = await screen.findByRole('heading', {
+      name: "Today's workout",
+    })
+    const strip = screen.getByRole('group', { name: 'This week' })
+    expect(follows(strip, heading)).toBe(true)
+    expect(follows(heading, screen.getByText('Week 2 of 19'))).toBe(true)
+    expect(screen.getByText('Easy run')).toBeInTheDocument()
+  })
+
+  it('shows a rest day', async () => {
+    await showOn('2026-11-17')
+    expect(await screen.findByText('Rest day')).toBeInTheDocument()
+  })
+
+  it("turns to done when you log today's run", async () => {
+    await showOn('2026-11-18')
+    await screen.findByText('To do')
+    fireEvent.click(screen.getByText('Log a run'))
+    fireEvent.change(screen.getByLabelText('Miles'), {
+      target: { value: '2.4' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Log run' }))
+    expect(await screen.findByText('Ran 2.4 miles')).toBeInTheDocument()
+  })
+
+  it('is hidden before the plan starts', async () => {
+    await showOn('2026-11-01', emptyStorage())
+    await screen.findByText(/Plan starts in/)
+    expect(
+      screen.queryByRole('heading', { name: "Today's workout" }),
+    ).not.toBeInTheDocument()
   })
 })

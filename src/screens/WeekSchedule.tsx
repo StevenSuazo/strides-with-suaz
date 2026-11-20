@@ -2,7 +2,8 @@
  * WeekSchedule.tsx: "Planned runs" for the week in progress, plus the
  * availability editor that drives it.
  *
- * Shows the week strip, then the summary you pass in, then the planned runs.
+ * Shows the week strip, today's workout, then the summary you pass in, then the
+ * planned runs.
  * Before the plan starts or after it ends only the summary is shown. Availability is
  * saved per week; a week with nothing saved starts with every day open.
  * Saving re-plans the week on screen. Planned runs show done, missed or coming
@@ -24,6 +25,7 @@ import { matchWeek, overrideWrites } from '../plan/weekMatch'
 import { useStorage } from '../storage/useStorage'
 import { AvailabilityEditor } from './AvailabilityEditor'
 import { PlannedWeek } from './PlannedWeek'
+import { TodayCard } from './TodayCard'
 import { WeekStrip } from './WeekStrip'
 
 const ALL_OPEN: WeekAvailability = Array(7).fill('open')
@@ -108,10 +110,11 @@ export const WeekSchedule = ({
   }, [matchedKinds, onMatchedKinds])
 
   // The {false} slots keep the summary in the same position in every state, so
-  // it is not rebuilt when the strip and planned runs appear around it.
+  // it is not rebuilt when the strip, today card and planned runs appear around it.
   if (weekIndex === undefined || !view.target)
     return (
       <>
+        {false}
         {false}
         {summary}
         {false}
@@ -121,6 +124,7 @@ export const WeekSchedule = ({
     return (
       <>
         {false}
+        {false}
         {summary}
         <p role="alert">{`Couldn't load availability: ${error}`}</p>
       </>
@@ -129,6 +133,7 @@ export const WeekSchedule = ({
   if (!ready || !week) {
     return (
       <>
+        {false}
         {false}
         {summary}
         {false}
@@ -156,6 +161,12 @@ export const WeekSchedule = ({
   return (
     <>
       <WeekStrip
+        weekStart={week.weekStart}
+        rows={week.rows}
+        extraRuns={week.extraRuns}
+        today={today}
+      />
+      <TodayCard
         weekStart={week.weekStart}
         rows={week.rows}
         extraRuns={week.extraRuns}

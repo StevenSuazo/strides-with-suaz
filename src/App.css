@@ -370,3 +370,45 @@ details > form {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Today's workout card */
+.today-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 4px 0 4px 14px;
+  border-left: 6px solid var(--border);
+  border-radius: 3px;
+}
+
+.today-item.kind-easy {
+  border-left-color: #3b82f6;
+}
+
+.today-item.kind-long {
+  border-left-color: #8b5cf6;
+}
+
+.today-item.kind-extra {
+  border-left-color: var(--muted);
+}
+
+.today-main {
+  flex: 1 1 160px;
+}
+
+.today-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.today-miles {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.today-ran {
+  flex: 1 1 100%;
+}
