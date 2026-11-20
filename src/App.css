@@ -289,3 +289,84 @@ details > form {
   text-align: left;
   border-color: transparent;
 }
+
+/* Progress chart */
+.progress-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.progress-chart .grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.progress-chart .axis-label,
+.progress-chart .week-label,
+.progress-chart .race-label {
+  fill: var(--muted);
+  font-size: 9px;
+}
+
+.progress-chart .week-label.current {
+  fill: var(--text);
+  font-weight: 700;
+}
+
+.progress-chart .week-ring {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+
+.progress-chart .bar-hit {
+  fill: #22a35a;
+}
+
+.progress-chart .bar-close {
+  fill: #e0a100;
+}
+
+.progress-chart .bar-short {
+  fill: #e5484d;
+}
+
+.progress-chart .bar-current {
+  fill: #3b82f6;
+}
+
+.progress-chart .mark {
+  fill: var(--text);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.progress-chart .target-line {
+  stroke: var(--text);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+
+.progress-chart .peak {
+  fill: var(--text);
+}
+
+.progress-chart .peak-label {
+  fill: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.progress-chart .legend {
+  margin-top: 8px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

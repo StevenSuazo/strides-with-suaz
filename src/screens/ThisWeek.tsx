@@ -7,23 +7,15 @@
  * instead. It does no loading, so it is easy to test with any PlanView.
  */
 import { daysUntilRace } from '../engine'
-import type { Decision, IsoDate } from '../engine/types'
+import type { IsoDate } from '../engine/types'
 import type { PlanView } from '../plan/progress'
 import { PLAN } from '../plan/settings'
+import { AFTER } from './decisionLabels'
 
 const formatMiles = (value: number): string => String(Number(value.toFixed(2)))
 
 const plural = (count: number, word: string): string =>
   `${count} ${word}${count === 1 ? '' : 's'}`
-
-const AFTER: Record<Decision, string> = {
-  advance: 'moved up',
-  repeat: 'repeated the target',
-  stepBack: 'stepped back',
-  recovery: 'took a recovery week',
-  taper: 'started the taper',
-  race: 'went to race week',
-}
 
 const raceCountdown = (today: IsoDate): string => {
   const days = daysUntilRace(today, PLAN.raceDate)
