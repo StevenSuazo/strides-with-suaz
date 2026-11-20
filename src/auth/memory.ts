@@ -3,7 +3,8 @@
  *
  * createMemoryAuth(options?): MemoryAuth
  * - options.user: start signed in.
- * - options.sendError / getUserError: make that call reject.
+ * - options.sendError / getUserError / verifyError: make that call reject.
+ * - options.code: the code verifyCode accepts (default 123456).
  * - sentLinks: the addresses sendMagicLink was called with.
  * - listenerCount(): how many onChange listeners are still subscribed.
  * - completeSignIn(email): pretends the person clicked the emailed link.
@@ -20,6 +21,8 @@ type Options = {
   user?: AuthUser
   sendError?: Error
   getUserError?: Error
+  verifyError?: Error
+  code?: string
 }
 
 export const createMemoryAuth: (options?: Options) => MemoryAuth = (
@@ -49,6 +52,12 @@ export const createMemoryAuth: (options?: Options) => MemoryAuth = (
     sendMagicLink: async (email) => {
       if (options.sendError) throw options.sendError
       sentLinks.push(email)
+    },
+    verifyCode: async (email, code) => {
+      if (options.verifyError) throw options.verifyError
+      if (code !== (options.code ?? '123456')) throw new Error('Invalid code')
+      user = { id: `user-${email}`, email }
+      notify()
     },
     signOut: async () => {
       user = null

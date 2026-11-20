@@ -66,4 +66,34 @@ describe('createMemoryAuth', () => {
     read!.email = 'changed@example.com'
     expect((await auth.getUser())?.email).toBe('me@example.com')
   })
+
+  it('signs in with the right code and tells listeners', async () => {
+    const auth = createMemoryAuth()
+    const seen: (AuthUser | null)[] = []
+    auth.onChange((user) => seen.push(user))
+    await auth.verifyCode('me@example.com', '123456')
+    expect(seen).toHaveLength(1)
+    expect((await auth.getUser())?.email).toBe('me@example.com')
+  })
+
+  it('rejects a wrong code and stays signed out', async () => {
+    const auth = createMemoryAuth()
+    await expect(auth.verifyCode('me@example.com', '000000')).rejects.toThrow(
+      'Invalid code',
+    )
+    expect(await auth.getUser()).toBeNull()
+  })
+
+  it('accepts a custom code', async () => {
+    const auth = createMemoryAuth({ code: '987654' })
+    await auth.verifyCode('me@example.com', '987654')
+    expect((await auth.getUser())?.email).toBe('me@example.com')
+  })
+
+  it('rejects verifyCode when given a verify error', async () => {
+    const auth = createMemoryAuth({ verifyError: new Error('Expired') })
+    await expect(auth.verifyCode('me@example.com', '123456')).rejects.toThrow(
+      'Expired',
+    )
+  })
 })
