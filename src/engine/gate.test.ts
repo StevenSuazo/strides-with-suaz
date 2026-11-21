@@ -243,7 +243,7 @@ describe('gate: reasons and bad input', () => {
   it('shows miles ran to the hundredth when they are not a whole tenth', () => {
     const result = gate(week(1, 8.5, 8.56), flat(12), fresh)
     expect(result.reason).toBe(
-      'Ran 8.56 of 8.5 miles with low pain, so next week goes up to 9.4 miles.',
+      'Ran 8.56 of 8.5 miles, more than planned, so next week goes up to 9.4 miles.',
     )
   })
 
