@@ -1,8 +1,8 @@
 /**
  * LoginGate.tsx: shows the app only to a signed-in person.
  *
- * Signed out: an email and password form. Signed in: a bar with the email and
- * a Sign out button, then the app. Must sit inside AuthProvider.
+ * Signed out: an email and password form. Signed in: the app (the Sign out
+ * button is on the More tab, see AccountCard). Must sit inside AuthProvider.
  */
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { isValidEmail } from './email'
@@ -24,19 +24,7 @@ export const LoginGate = ({ children }: { children: ReactNode }) => {
     return <p role="alert">{`Couldn't check your sign-in: ${state.message}`}</p>
   }
 
-  if (state.status === 'signedIn') {
-    return (
-      <>
-        <div className="app-bar">
-          <span>{state.user.email}</span>
-          <button type="button" onClick={() => void auth.signOut()}>
-            Sign out
-          </button>
-        </div>
-        {children}
-      </>
-    )
-  }
+  if (state.status === 'signedIn') return <>{children}</>
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()

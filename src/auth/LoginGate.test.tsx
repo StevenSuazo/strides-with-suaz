@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { AuthProvider } from './AuthProvider'
+import { AccountCard } from './AccountCard'
 import { LoginGate } from './LoginGate'
 import { createMemoryAuth, type MemoryAuth } from './memory'
 
@@ -12,6 +13,7 @@ const renderGate = (auth: MemoryAuth) =>
     <AuthProvider auth={auth}>
       <LoginGate>
         <p>The app</p>
+        <AccountCard />
       </LoginGate>
     </AuthProvider>,
   )
@@ -54,14 +56,16 @@ describe('LoginGate', () => {
     renderGate(createMemoryAuth())
     await signInAs(user, 'me@example.com', 'password123')
     expect(await screen.findByText('The app')).toBeInTheDocument()
-    expect(screen.getByText('me@example.com')).toBeInTheDocument()
+    expect(screen.getByText('Signed in as me@example.com')).toBeInTheDocument()
   })
 
   it('trims spaces around the email', async () => {
     const user = userEvent.setup()
     renderGate(createMemoryAuth())
     await signInAs(user, ' me@example.com ', 'password123')
-    expect(await screen.findByText('me@example.com')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Signed in as me@example.com'),
+    ).toBeInTheDocument()
   })
 
   it('shows why a wrong password failed and keeps the form', async () => {
@@ -104,7 +108,7 @@ describe('LoginGate', () => {
   it('shows the app and the email when already signed in', async () => {
     renderGate(createMemoryAuth({ user: me }))
     expect(await screen.findByText('The app')).toBeInTheDocument()
-    expect(screen.getByText('me@example.com')).toBeInTheDocument()
+    expect(screen.getByText('Signed in as me@example.com')).toBeInTheDocument()
     expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()
   })
 
