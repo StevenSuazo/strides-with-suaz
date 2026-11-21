@@ -71,11 +71,24 @@ describe('todayInfo', () => {
 
   it('describes an extra run, summing the day', () => {
     expect(
-      info('2026-11-17', [
-        run('x', '2026-11-17', 2),
-        run('y', '2026-11-17', 1.5),
-      ]),
+      todayInfo(
+        '2026-11-16',
+        [],
+        [run('x', '2026-11-17', 2), run('y', '2026-11-17', 1.5)],
+        '2026-11-17',
+      ),
     ).toEqual({ kind: 'extra', title: 'Extra run', miles: 3.5, status: 'done' })
+  })
+
+  it('only counts extra runs from today', () => {
+    expect(
+      todayInfo(
+        '2026-11-16',
+        [],
+        [run('x', '2026-11-16', 2), run('y', '2026-11-17', 1.5)],
+        '2026-11-17',
+      ),
+    ).toMatchObject({ kind: 'extra', miles: 1.5 })
   })
 
   it('is undefined when today is outside the week', () => {
