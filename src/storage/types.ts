@@ -45,4 +45,5 @@ export type AppStorage = {
 
   getOverrides: () => Promise<Overrides>
   saveOverride: (runId: string, workoutId: string) => Promise<void>
+  deleteOverride: (runId: string) => Promise<void> // a missing id does nothing
 }

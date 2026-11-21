@@ -10,6 +10,10 @@
  * overrideWrites(...) says which overrides to save when you pick a run for a
  * workout by hand. If another run was already hand-matched to that workout, it
  * is set to UNMATCHED (an id no workout has), so it no longer fights for it.
+ *
+ * overrideClears(...) says which overrides to delete when you let the app
+ * decide again for a run: that run's, plus any run in the same week that was
+ * freed by a takeover (UNMATCHED), so the app's own matching comes back.
  */
 import { matchRuns } from '../engine'
 import type { IsoDate, PlannedRun, Run, Workout } from '../engine/types'
@@ -93,3 +97,14 @@ export const overrideWrites = (
     .map(([otherRun]): [string, string] => [otherRun, UNMATCHED]),
   [runId, workout],
 ]
+
+export const overrideClears = (
+  overrides: Record<string, string>,
+  weekRuns: Run[],
+  runId: string,
+): string[] => {
+  const freed = weekRuns
+    .map((run) => run.id)
+    .filter((id) => id !== runId && overrides[id] === UNMATCHED)
+  return [runId, ...freed].filter((id) => id in overrides)
+}

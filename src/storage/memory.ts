@@ -87,5 +87,8 @@ export const createMemoryStorage: () => AppStorage = () => {
       checkOverride(runId, workoutId)
       overrides[runId] = workoutId
     },
+    deleteOverride: async (runId) => {
+      delete overrides[runId]
+    },
   }
 }

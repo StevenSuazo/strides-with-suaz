@@ -150,4 +150,11 @@ export const createSupabaseStorage: (
       .upsert(overrideToRow(runId, workoutId), { onConflict: 'user_id,run_id' })
     if (error) throw storageError(error)
   },
+  deleteOverride: async (runId) => {
+    const { error } = await client
+      .from('overrides')
+      .delete()
+      .eq('run_id', runId)
+    if (error) throw storageError(error)
+  },
 })
