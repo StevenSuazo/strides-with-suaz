@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { PlannedRun, Run } from '../engine/types'
-import { UNMATCHED, matchWeek, overrideWrites } from './weekMatch'
+import {
+  UNMATCHED,
+  matchWeek,
+  overrideClears,
+  overrideWrites,
+} from './weekMatch'
 
 const planned: PlannedRun[] = [
   { dayIndex: 0, kind: 'easy', miles: 2.3 },
@@ -144,5 +149,30 @@ describe('overrideWrites', () => {
       ['a', 'w2-2'],
     ])
     expect(overrideWrites({ a: 'w2-2' }, 'w2-2', 'a')).toEqual([['a', 'w2-2']])
+  })
+})
+
+describe('overrideClears', () => {
+  const weekRuns = [run('a', '2026-11-16', 2), run('b', '2026-11-18', 2)]
+
+  it('clears the run you let the app decide for', () => {
+    expect(overrideClears({ a: 'w2-2' }, weekRuns, 'a')).toEqual(['a'])
+  })
+
+  it('also clears runs this week that were freed by a takeover', () => {
+    expect(overrideClears({ a: 'w2-2', b: UNMATCHED }, weekRuns, 'a')).toEqual([
+      'a',
+      'b',
+    ])
+  })
+
+  it('leaves other hand matches and other weeks alone', () => {
+    expect(
+      overrideClears({ a: 'w2-2', b: 'w2-4', far: UNMATCHED }, weekRuns, 'a'),
+    ).toEqual(['a'])
+  })
+
+  it('skips a run that has no override', () => {
+    expect(overrideClears({}, weekRuns, 'a')).toEqual([])
   })
 })

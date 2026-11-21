@@ -21,7 +21,7 @@ import { placeRuns, weekStartDate } from '../engine'
 import type { IsoDate, Run, RunKind, WeekAvailability } from '../engine/types'
 import type { PlanView } from '../plan/progress'
 import { PLAN } from '../plan/settings'
-import { matchWeek, overrideWrites } from '../plan/weekMatch'
+import { matchWeek, overrideClears, overrideWrites } from '../plan/weekMatch'
 import { useStorage } from '../storage/useStorage'
 import { AvailabilityEditor } from './AvailabilityEditor'
 import { PlannedWeek } from './PlannedWeek'
@@ -158,6 +158,17 @@ export const WeekSchedule = ({
     )
   }
 
+  const unmatch = async (runId: string) => {
+    const clears = overrideClears(ready.overrides, week.weekRuns, runId)
+    for (const id of clears) await storage.deleteOverride(id)
+    setLoaded((current) => {
+      if (!current) return current
+      const overrides = { ...current.overrides }
+      for (const id of clears) delete overrides[id]
+      return { ...current, overrides }
+    })
+  }
+
   return (
     <>
       <WeekStrip
@@ -183,6 +194,7 @@ export const WeekSchedule = ({
           runs={runs}
           overrides={ready.overrides}
           onMatch={match}
+          onUnmatch={unmatch}
         />
         <details>
           <summary>Edit availability</summary>

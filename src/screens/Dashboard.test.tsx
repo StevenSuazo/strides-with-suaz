@@ -373,6 +373,66 @@ describe('Dashboard: planned vs done', () => {
   })
 })
 
+describe('Dashboard: undoing a hand match', () => {
+  it('clears the override and lets the app choose again', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    await storage.saveOverride('r1', 'w2-2')
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard today="2026-11-17" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    await screen.findByText('Done: ran 2.5 miles')
+    fireEvent.change(screen.getByLabelText('Run for Wed, Nov 18'), {
+      target: { value: '__auto' },
+    })
+    await waitFor(async () => expect(await storage.getOverrides()).toEqual({}))
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText('Run for Mon, Nov 16') as HTMLSelectElement)
+          .value,
+      ).toBe('r1'),
+    )
+    expect(
+      (screen.getByLabelText('Run for Wed, Nov 18') as HTMLSelectElement).value,
+    ).toBe('')
+  })
+
+  it('also frees runs the takeover had pushed aside', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    await storage.saveRun({
+      id: 'r2',
+      date: '2026-11-18',
+      miles: 2.4,
+      source: 'in_app',
+    })
+    await storage.saveOverride('r1', 'w2-2')
+    await storage.saveOverride('r2', 'unmatched')
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard today="2026-11-17" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    await screen.findByText('Done: ran 2.5 miles')
+    fireEvent.change(screen.getByLabelText('Run for Wed, Nov 18'), {
+      target: { value: '__auto' },
+    })
+    await waitFor(async () => expect(await storage.getOverrides()).toEqual({}))
+  })
+})
+
 describe('Dashboard: collapsed forms', () => {
   const openStates = () =>
     Array.from(document.querySelectorAll('details')).map((d) => d.open)

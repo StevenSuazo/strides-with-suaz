@@ -463,4 +463,18 @@ describe('overrides', () => {
     )
     await expect(storage.saveOverride('run-1', '')).rejects.toThrow(RangeError)
   })
+
+  it('deletes an override', async () => {
+    const storage = createMemoryStorage()
+    await storage.saveOverride('run-1', 'workout-1')
+    await storage.saveOverride('run-2', 'workout-2')
+    await storage.deleteOverride('run-1')
+    expect(await storage.getOverrides()).toEqual({ 'run-2': 'workout-2' })
+  })
+
+  it('does nothing when deleting a missing override', async () => {
+    const storage = createMemoryStorage()
+    await storage.deleteOverride('nope')
+    expect(await storage.getOverrides()).toEqual({})
+  })
 })

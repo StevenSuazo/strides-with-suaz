@@ -20,6 +20,7 @@ const show = (
     today?: string
     overrides?: Record<string, string>
     onMatch?: (workoutId: string, runId: string) => Promise<void>
+    onUnmatch?: (runId: string) => Promise<void>
   } = {},
 ) =>
   render(
@@ -31,6 +32,7 @@ const show = (
       runs={extra.runs ?? []}
       overrides={extra.overrides ?? {}}
       onMatch={extra.onMatch ?? (async () => {})}
+      onUnmatch={extra.onUnmatch ?? (async () => {})}
     />,
   )
 
@@ -173,6 +175,62 @@ describe('PlannedWeek: matching by hand', () => {
     })
     expect((await screen.findByRole('alert')).textContent).toBe(
       "Couldn't match the run: offline",
+    )
+  })
+})
+
+describe('PlannedWeek: undoing a hand match', () => {
+  const runs = [run('a', '2026-11-16', 2.5), run('b', '2026-11-21', 3)]
+  const options = (label: string) =>
+    Array.from((screen.getByLabelText(label) as HTMLSelectElement).options).map(
+      (o) => o.text,
+    )
+
+  it('offers "Let the app decide" only on a hand-matched run', () => {
+    show(allOpen, { runs, overrides: { a: 'w2-0' } })
+    expect(options('Run for Mon, Nov 16')).toContain('Let the app decide')
+    expect(options('Run for Wed, Nov 18')).not.toContain('Let the app decide')
+  })
+
+  it('does not offer it for a match the app made itself', () => {
+    show(allOpen, { runs })
+    expect(options('Run for Mon, Nov 16')).not.toContain('Let the app decide')
+  })
+
+  it('does not offer it when the override points at another workout', () => {
+    show(allOpen, { runs, overrides: { a: 'w2-2' } })
+    expect(options('Run for Mon, Nov 16')).not.toContain('Let the app decide')
+  })
+
+  it('calls onUnmatch with the run id when you choose it', async () => {
+    const calls: string[] = []
+    show(allOpen, {
+      runs,
+      overrides: { a: 'w2-0' },
+      onUnmatch: async (id) => {
+        calls.push(id)
+      },
+    })
+    fireEvent.change(screen.getByLabelText('Run for Mon, Nov 16'), {
+      target: { value: '__auto' },
+    })
+    await screen.findByLabelText('Run for Mon, Nov 16')
+    expect(calls).toEqual(['a'])
+  })
+
+  it('shows the reason when undoing fails', async () => {
+    show(allOpen, {
+      runs,
+      overrides: { a: 'w2-0' },
+      onUnmatch: async () => {
+        throw new Error('offline')
+      },
+    })
+    fireEvent.change(screen.getByLabelText('Run for Mon, Nov 16'), {
+      target: { value: '__auto' },
+    })
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      "Couldn't undo the match: offline",
     )
   })
 })

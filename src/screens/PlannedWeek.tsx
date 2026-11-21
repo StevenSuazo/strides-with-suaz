@@ -4,7 +4,9 @@
  * Each line reads "Fri, Nov 20: long run, 4.7 miles" followed by its
  * status: "Done: ran 4.8 miles", "Missed", or "Coming up". Runs you logged
  * that matched nothing are listed under "Extra runs". Each planned run has a
- * dropdown to pick a different logged run for it; onMatch saves that.
+ * dropdown to pick a different logged run for it; onMatch saves that. A run
+ * you matched by hand also offers "Let the app decide", which calls onUnmatch
+ * with the run id to go back to the app's own matching.
  * Notes from the planner are shown as they come, and miles the planner could
  * not place are called out. weekStart is the Monday of the week.
  */
@@ -19,6 +21,8 @@ import type {
 import { dateOfDay, matchWeek } from '../plan/weekMatch'
 import { formatDate, formatMiles } from './format'
 
+const AUTO = '__auto'
+
 export const PlannedWeek = ({
   target,
   availability,
@@ -27,6 +31,7 @@ export const PlannedWeek = ({
   runs,
   overrides,
   onMatch,
+  onUnmatch,
 }: {
   target: WeekTarget
   availability: WeekAvailability
@@ -35,6 +40,7 @@ export const PlannedWeek = ({
   runs: Run[]
   overrides: Record<string, string>
   onMatch: (workoutId: string, runId: string) => Promise<void>
+  onUnmatch: (runId: string) => Promise<void>
 }) => {
   const [error, setError] = useState<string | undefined>()
   const plan = placeRuns(target, availability)
@@ -47,8 +53,17 @@ export const PlannedWeek = ({
     today,
   })
 
-  const pick = async (workoutId: string, runId: string) => {
+  const pick = async (workoutId: string, runId: string, current?: string) => {
     setError(undefined)
+    if (runId === AUTO) {
+      try {
+        if (current) await onUnmatch(current)
+      } catch (caught) {
+        const reason = caught instanceof Error ? caught.message : String(caught)
+        setError(`Couldn't undo the match: ${reason}`)
+      }
+      return
+    }
     try {
       await onMatch(workoutId, runId)
     } catch (caught) {
@@ -80,12 +95,15 @@ export const PlannedWeek = ({
                     aria-label={`Run for ${name}`}
                     value={run?.id ?? ''}
                     onChange={(event) =>
-                      void pick(workout.id, event.target.value)
+                      void pick(workout.id, event.target.value, run?.id)
                     }
                   >
                     <option value="" disabled>
                       Match to…
                     </option>
+                    {run && overrides[run.id] === workout.id && (
+                      <option value={AUTO}>Let the app decide</option>
+                    )}
                     {weekRuns.map((option) => (
                       <option key={option.id} value={option.id}>
                         {`${formatDate(option.date)}: ${formatMiles(option.miles)} miles`}
