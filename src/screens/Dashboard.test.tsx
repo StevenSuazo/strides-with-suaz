@@ -773,6 +773,13 @@ describe('Dashboard: today card', () => {
     expect(screen.getByText('Easy run')).toBeInTheDocument()
   })
 
+  it('opens the details for today on tap', async () => {
+    await showOn('2026-11-20')
+    fireEvent.click(await screen.findByRole('button', { name: 'Show details' }))
+    expect(screen.getByText(/longest run of your week/)).toBeInTheDocument()
+    expect(screen.getByText(/Bring water/)).toBeInTheDocument()
+  })
+
   it('shows a rest day', async () => {
     await showOn('2026-11-17')
     expect(await screen.findByText('Rest day')).toBeInTheDocument()
