@@ -46,7 +46,7 @@ describe('formatDuration', () => {
 describe('paceOf', () => {
   it('gives the time per mile, rounded to the second', () => {
     expect(paceOf(2310, 4)).toBe('9:38')
-    expect(paceOf(1800, 3.1)).toBe('9:40')
+    expect(paceOf(1800, 3.1)).toBe('9:41')
   })
 
   it('is undefined without miles', () => {
