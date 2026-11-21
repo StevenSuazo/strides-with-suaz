@@ -124,3 +124,34 @@ describe('findPlace', () => {
     )
   })
 })
+
+describe('nameOf', () => {
+  it('names the spot from the reverse look-up', async () => {
+    const fetchFn = vi.fn().mockReturnValue(
+      json({
+        locality: 'Bronx',
+        principalSubdivisionCode: 'US-NY',
+        countryCode: 'US',
+      }),
+    )
+    const service = createOpenMeteoService(fetchFn)
+    expect(await service.nameOf(40.85, -73.87)).toBe('Bronx, NY')
+    const url = new URL(fetchFn.mock.calls[0][0] as string)
+    expect(url.origin + url.pathname).toBe(
+      'https://api.bigdatacloud.net/data/reverse-geocode-client',
+    )
+    expect(url.searchParams.get('latitude')).toBe('40.85')
+    expect(url.searchParams.get('longitude')).toBe('-73.87')
+  })
+
+  it('is undefined when the service fails or is offline', async () => {
+    expect(
+      await createOpenMeteoService(() => json({}, false, 500)).nameOf(1, 2),
+    ).toBeUndefined()
+    expect(
+      await createOpenMeteoService(() =>
+        Promise.reject(new Error('offline')),
+      ).nameOf(1, 2),
+    ).toBeUndefined()
+  })
+})

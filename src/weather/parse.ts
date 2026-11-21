@@ -89,3 +89,17 @@ export const parseZipPlace = (json: unknown): Place | undefined => {
     label: typeof state === 'string' ? `${name}, ${state}` : name,
   }
 }
+
+// BigDataCloud reverse look-up: "Bronx, NY" for US spots, "Paris, FR" elsewhere.
+export const parseReverseName = (json: unknown): string | undefined => {
+  if (!isObj(json)) return undefined
+  const pick = (value: unknown) =>
+    typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined
+  const name = pick(json.locality) ?? pick(json.city)
+  if (!name) return undefined
+  const sub = pick(json.principalSubdivisionCode)
+  const country = pick(json.countryCode)
+  const region =
+    country === 'US' && sub?.startsWith('US-') ? sub.slice(3) : country
+  return region ? `${name}, ${region}` : name
+}

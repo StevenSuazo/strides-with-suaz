@@ -19,6 +19,7 @@ const setup = (service: Partial<WeatherService> = {}) => {
   const full: WeatherService = {
     forecast: vi.fn().mockResolvedValue(forecast),
     findPlace: vi.fn().mockResolvedValue(place),
+    nameOf: vi.fn().mockResolvedValue('Bronx, NY'),
     ...service,
   }
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -26,6 +27,17 @@ const setup = (service: Partial<WeatherService> = {}) => {
   )
   return { full, ...renderHook(() => useWeather('2026-11-20'), { wrapper }) }
 }
+
+const shareLocation = () =>
+  Object.defineProperty(navigator, 'geolocation', {
+    configurable: true,
+    value: {
+      getCurrentPosition: (ok: PositionCallback) =>
+        ok({
+          coords: { latitude: 40.85, longitude: -73.87 },
+        } as GeolocationPosition),
+    },
+  })
 
 beforeEach(() => localStorage.clear())
 
@@ -99,5 +111,20 @@ describe('useWeather', () => {
     act(() => result.current.clear())
     expect(result.current.state.status).toBe('needsLocation')
     expect(loadPlace()).toBeUndefined()
+  })
+
+  it('names the phone location, e.g. Bronx, NY', async () => {
+    shareLocation()
+    const { result, full } = setup()
+    await act(() => result.current.locateMe())
+    expect(full.nameOf).toHaveBeenCalledWith(40.85, -73.87)
+    expect(loadPlace()).toEqual({ lat: 40.85, lon: -73.87, label: 'Bronx, NY' })
+  })
+
+  it('keeps "Your location" when the name is not found', async () => {
+    shareLocation()
+    const { result } = setup({ nameOf: vi.fn().mockResolvedValue(undefined) })
+    await act(() => result.current.locateMe())
+    expect(loadPlace()?.label).toBe('Your location')
   })
 })

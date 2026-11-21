@@ -147,6 +147,7 @@ describe('TodayPage weather', () => {
     savePlace({ lat: 1, lon: 2, label: 'Brooklyn, New York' })
     const service = {
       findPlace: vi.fn(),
+      nameOf: vi.fn(),
       forecast: vi.fn().mockResolvedValue({
         condition: 'clear',
         highF: 92,

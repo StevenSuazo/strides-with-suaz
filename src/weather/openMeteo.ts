@@ -3,13 +3,19 @@
  *
  * Forecasts come from Open-Meteo (free, no account or key) in Fahrenheit, for
  * the local time zone of the place. A 5-digit US zip is looked up with
- * Zippopotam; anything else is searched by name with Open-Meteo's place
+ * Zippopotam; a spot from the phone's location is named with BigDataCloud's
+ * free reverse look-up; anything else is searched by name with Open-Meteo's place
  * search (only the part before a comma is searched, so "Brooklyn, NY" works).
  * fetchFn can be replaced in tests. Nothing here is cached: the service
  * worker ignores other sites, so every look-up is live.
  */
 import type { IsoDate } from '../engine/types'
-import { parseForecast, parseOpenMeteoPlace, parseZipPlace } from './parse'
+import {
+  parseForecast,
+  parseOpenMeteoPlace,
+  parseReverseName,
+  parseZipPlace,
+} from './parse'
 import type { Place, WeatherService } from './types'
 
 const DAILY = [
@@ -55,5 +61,19 @@ export const createOpenMeteoService = (
       throw new Error(`Place search error (${response.status})`)
     }
     return parseOpenMeteoPlace(await response.json())
+  },
+
+  // A failed name look-up is not an error: the caller just has no name.
+  nameOf: async (lat: number, lon: number) => {
+    try {
+      const response = await fetchFn(
+        'https://api.bigdatacloud.net/data/reverse-geocode-client' +
+          `?latitude=${lat}&longitude=${lon}&localityLanguage=en`,
+      )
+      if (!response.ok) return undefined
+      return parseReverseName(await response.json())
+    } catch {
+      return undefined
+    }
   },
 })

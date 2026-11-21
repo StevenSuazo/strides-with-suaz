@@ -70,11 +70,13 @@ export const useWeather = (date: IsoDate) => {
 
   const locateMe = useCallback(async () => {
     try {
-      choose(await requestPosition())
+      const found = await requestPosition()
+      const name = await service.nameOf(found.lat, found.lon)
+      choose(name ? { ...found, label: name } : found)
     } catch (error) {
       setNotice(messageOf(error))
     }
-  }, [choose])
+  }, [choose, service])
 
   const lookUp = useCallback(
     async (query: string) => {
