@@ -509,29 +509,41 @@ button.today-item {
   margin-bottom: 4px;
 }
 
-.weather-corner {
-  position: absolute;
-  top: var(--space);
-  right: var(--space);
+.weather-side {
+  float: right;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
+  width: 46%;
+  margin-left: 8px;
+  text-align: right;
 }
 
-.weather-temp {
-  font-size: 1.1rem;
-  font-weight: 600;
+.weather-side p {
+  margin: 0 0 2px;
+  font-size: 0.9rem;
 }
 
-.weather-section h3 {
-  margin-top: 0;
+.weather-side .weather-temp {
+  font-size: 1.6rem;
+  font-weight: 700;
 }
 
-.weather-summary {
-  font-weight: 600;
+.weather-side .weather-place {
+  margin-top: 6px;
+}
+
+.weather-setup,
+.weather-note {
+  clear: both;
+}
+
+.weather-setup {
+  padding-top: 12px;
 }
 
 .weather-note {
+  margin: 12px 0 0;
   font-weight: 500;
 }
 
@@ -547,6 +559,11 @@ button.today-item {
   flex: 1;
   flex-direction: column;
   gap: 4px;
+}
+
+button.link,
+.today-hero .weather-setup button {
+  color: #fff;
 }
 
 button.link {

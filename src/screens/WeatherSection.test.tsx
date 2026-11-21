@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { WeatherState } from '../weather/useWeather'
-import { WeatherCorner, WeatherSection } from './WeatherSection'
+import { WeatherExtras, WeatherSide } from './WeatherSection'
 
 const place = { lat: 1, lon: 2, label: 'Brooklyn, New York' }
 const forecast = {
@@ -22,26 +22,21 @@ const actions = () => ({
 })
 
 const show = (state: WeatherState, notice?: string, a = actions()) => {
-  render(<WeatherSection state={state} notice={notice} {...a} />)
+  render(
+    <>
+      <WeatherSide state={state} clear={a.clear} retry={a.retry} />
+      <WeatherExtras
+        state={state}
+        notice={notice}
+        locateMe={a.locateMe}
+        lookUp={a.lookUp}
+      />
+    </>,
+  )
   return a
 }
 
-describe('WeatherCorner', () => {
-  it('shows the icon and the high when there is a forecast', () => {
-    render(<WeatherCorner state={ready} />)
-    expect(screen.getByRole('img', { name: 'Sunny' })).toBeInTheDocument()
-    expect(screen.getByText('91°')).toBeInTheDocument()
-  })
-
-  it('shows nothing without a forecast', () => {
-    const { container } = render(
-      <WeatherCorner state={{ status: 'needsLocation' }} />,
-    )
-    expect(container).toBeEmptyDOMElement()
-  })
-})
-
-describe('WeatherSection', () => {
+describe('Weather in the header', () => {
   it('offers your location or a typed place when none is saved', async () => {
     const a = show({ status: 'needsLocation' })
     await userEvent.click(
@@ -68,7 +63,9 @@ describe('WeatherSection', () => {
 
   it('shows the details, notes and place, and can change the place', async () => {
     const a = show(ready)
-    expect(screen.getByText('High 91° / Low 70°')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Sunny' })).toBeInTheDocument()
+    expect(screen.getByText('91°')).toBeInTheDocument()
+    expect(screen.getByText('Low 70°')).toBeInTheDocument()
     expect(screen.getByText('Feels like 95°')).toBeInTheDocument()
     expect(screen.getByText('10% chance of rain')).toBeInTheDocument()
     expect(screen.getByText(/Very hot/)).toBeInTheDocument()

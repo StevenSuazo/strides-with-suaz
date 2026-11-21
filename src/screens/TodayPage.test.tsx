@@ -143,7 +143,7 @@ describe('TodayPage weather', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows the saved place weather with a note and the corner icon', async () => {
+  it('shows the saved place weather with a note and the icon', async () => {
     savePlace({ lat: 1, lon: 2, label: 'Brooklyn, New York' })
     const service = {
       findPlace: vi.fn(),

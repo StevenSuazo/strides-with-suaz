@@ -1,37 +1,21 @@
 /**
- * WeatherSection.tsx: the weather parts of the Today page.
+ * WeatherSection.tsx: the weather on the Today page, drawn inside the coloured
+ * header (no box of its own). Two pieces, both taking the state from
+ * useWeather: WeatherSide goes first in the header and floats right;
+ * WeatherExtras goes last and spans the full width.
  *
- * Both take the state from useWeather and only draw it:
- * - WeatherCorner: the icon and the day's high, for the top-right of the
- *   coloured header. Draws nothing until there is a forecast.
- * - WeatherSection: a card. With no place saved it offers "Use my location"
- *   and a box for a city or ZIP code. With a forecast it shows the high, low,
- *   feels-like, rain chance, any heat/cold/rain notes and the place with
- *   "Change location". Also covers loading, "Forecast not available yet"
- *   (the day is past the ~week the forecast covers) and errors with retry.
+ * - With a forecast: the icon and high temperature down the right side, with
+ *   the low, feels-like, rain chance and the place ("Change location") under
+ *   them, then any heat/cold/rain notes across the full width.
+ * - With no place saved: "Use my location" and a box for a city or ZIP code,
+ *   across the full width.
+ * - Loading, "Forecast not available yet" (the day is past the ~week the
+ *   forecast covers) and errors with a retry button stay small on the right.
  */
 import { useState, type FormEvent } from 'react'
-import { conditionLabel, weatherNotes } from '../weather/conditions'
+import { weatherNotes } from '../weather/conditions'
 import type { WeatherState } from '../weather/useWeather'
 import { WeatherIcon } from './WeatherIcon'
-
-export const WeatherCorner = ({ state }: { state: WeatherState }) => {
-  if (state.status !== 'ready') return null
-  const { forecast } = state
-  return (
-    <div className="weather-corner">
-      <WeatherIcon condition={forecast.condition} />
-      <span className="weather-temp">{`${forecast.highF}°`}</span>
-    </div>
-  )
-}
-
-type Actions = {
-  locateMe: () => void
-  lookUp: (query: string) => void
-  clear: () => void
-  retry: () => void
-}
 
 const PlaceLine = ({ label, clear }: { label: string; clear: () => void }) => (
   <p className="weather-place muted">
@@ -42,43 +26,18 @@ const PlaceLine = ({ label, clear }: { label: string; clear: () => void }) => (
   </p>
 )
 
-export const WeatherSection = ({
+export const WeatherSide = ({
   state,
-  notice,
-  locateMe,
-  lookUp,
   clear,
   retry,
-}: { state: WeatherState; notice?: string } & Actions) => {
-  const [query, setQuery] = useState('')
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
-    const text = query.trim()
-    if (text !== '') lookUp(text)
-  }
-
+}: {
+  state: WeatherState
+  clear: () => void
+  retry: () => void
+}) => {
+  if (state.status === 'needsLocation') return null
   return (
-    <section className="card weather-section">
-      <h3>Weather</h3>
-      {state.status === 'needsLocation' && (
-        <>
-          <p>See the forecast for your run.</p>
-          <button type="button" onClick={locateMe}>
-            Use my location
-          </button>
-          <form className="weather-form" onSubmit={submit}>
-            <label>
-              City or ZIP code
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </label>
-            <button type="submit">Look up</button>
-          </form>
-          {notice && <p role="alert">{notice}</p>}
-        </>
-      )}
+    <div className="weather-side">
       {state.status === 'loading' && <p>Loading the weather…</p>}
       {state.status === 'unavailable' && (
         <>
@@ -97,20 +56,65 @@ export const WeatherSection = ({
       )}
       {state.status === 'ready' && (
         <>
-          <p className="weather-summary">
-            {conditionLabel(state.forecast.condition)}
-          </p>
-          <p>{`High ${state.forecast.highF}° / Low ${state.forecast.lowF}°`}</p>
+          <WeatherIcon condition={state.forecast.condition} />
+          <p className="weather-temp">{`${state.forecast.highF}°`}</p>
+          <p>{`Low ${state.forecast.lowF}°`}</p>
           <p>{`Feels like ${state.forecast.feelsLikeHighF}°`}</p>
           <p>{`${state.forecast.rainChance}% chance of rain`}</p>
-          {weatherNotes(state.forecast).map((note) => (
-            <p key={note} className="weather-note">
-              {note}
-            </p>
-          ))}
           <PlaceLine label={state.place.label} clear={clear} />
         </>
       )}
-    </section>
+    </div>
+  )
+}
+
+export const WeatherExtras = ({
+  state,
+  notice,
+  locateMe,
+  lookUp,
+}: {
+  state: WeatherState
+  notice?: string
+  locateMe: () => void
+  lookUp: (query: string) => void
+}) => {
+  const [query, setQuery] = useState('')
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    const text = query.trim()
+    if (text !== '') lookUp(text)
+  }
+
+  if (state.status === 'needsLocation') {
+    return (
+      <div className="weather-setup">
+        <p>See the forecast for your run.</p>
+        <button type="button" onClick={locateMe}>
+          Use my location
+        </button>
+        <form className="weather-form" onSubmit={submit}>
+          <label>
+            City or ZIP code
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </label>
+          <button type="submit">Look up</button>
+        </form>
+        {notice && <p role="alert">{notice}</p>}
+      </div>
+    )
+  }
+  if (state.status !== 'ready') return null
+  return (
+    <>
+      {weatherNotes(state.forecast).map((note) => (
+        <p key={note} className="weather-note">
+          {note}
+        </p>
+      ))}
+    </>
   )
 }
