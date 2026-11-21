@@ -1,8 +1,12 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TodayInfo } from '../plan/todayInfo'
+import { savePlace } from '../weather/locationStore'
+import { WeatherProvider } from '../weather/WeatherProvider'
 import { TodayPage } from './TodayPage'
+
+beforeEach(() => localStorage.clear())
 
 const show = (info: TodayInfo, onBack = () => {}) =>
   render(<TodayPage info={info} today="2026-11-20" onBack={onBack} />)
@@ -121,5 +125,45 @@ describe('TodayPage: header colour', () => {
     const { container } = show({ kind: 'easy', title: 'Easy run', miles: 2.3 })
     const hero = container.querySelector('.today-hero') as HTMLElement
     expect(hero).not.toContainElement(screen.getByText(/conversational/))
+  })
+})
+
+describe('TodayPage weather', () => {
+  const info: TodayInfo = {
+    kind: 'long',
+    title: 'Long run',
+    miles: 4.7,
+    status: 'todo',
+  }
+
+  it('asks for a location before showing weather', () => {
+    show(info)
+    expect(
+      screen.getByRole('button', { name: 'Use my location' }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows the saved place weather with a note and the icon', async () => {
+    savePlace({ lat: 1, lon: 2, label: 'Brooklyn, New York' })
+    const service = {
+      findPlace: vi.fn(),
+      forecast: vi.fn().mockResolvedValue({
+        condition: 'clear',
+        highF: 92,
+        lowF: 71,
+        feelsLikeHighF: 96,
+        rainChance: 0,
+      }),
+    }
+    render(
+      <WeatherProvider service={service}>
+        <TodayPage info={info} today="2026-11-20" onBack={() => {}} />
+      </WeatherProvider>,
+    )
+    expect(await screen.findByText(/Very hot/)).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('img', { name: 'Sunny' }).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getByText('92°')).toBeInTheDocument()
   })
 })
