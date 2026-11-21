@@ -22,16 +22,27 @@ const setup = (
   onDelete: (id: string) => Promise<void> = async () => {},
 ) => {
   const deleted: string[] = []
+  const edited: string[] = []
   render(
     <CheckInList
       checkIns={checkIns}
+      onEdit={(found) => edited.push(found.id)}
       onDelete={async (id) => {
         await onDelete(id)
         deleted.push(id)
       }}
     />,
   )
-  return { deleted, user: userEvent.setup() }
+  return { deleted, edited, user: userEvent.setup() }
+}
+
+const openDelete = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(
+    screen.getByRole('button', { name: 'Actions for Sun, Nov 15 check-in' }),
+  )
+  await user.click(
+    screen.getByRole('menuitem', { name: 'Delete Sun, Nov 15 check-in' }),
+  )
 }
 
 describe('CheckInList', () => {
@@ -90,9 +101,7 @@ describe('CheckInList', () => {
 
   it('asks before deleting, then deletes on confirm', async () => {
     const { deleted, user } = setup([checkIn('a', '2026-11-15')])
-    await user.click(
-      screen.getByRole('button', { name: 'Delete Sun, Nov 15 check-in' }),
-    )
+    await openDelete(user)
     expect(deleted).toEqual([])
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(deleted).toEqual(['a'])
@@ -100,9 +109,7 @@ describe('CheckInList', () => {
 
   it('keeps the check-in when you choose Keep', async () => {
     const { deleted, user } = setup([checkIn('a', '2026-11-15')])
-    await user.click(
-      screen.getByRole('button', { name: 'Delete Sun, Nov 15 check-in' }),
-    )
+    await openDelete(user)
     await user.click(screen.getByRole('button', { name: 'Keep check-in' }))
     expect(deleted).toEqual([])
   })
@@ -111,12 +118,33 @@ describe('CheckInList', () => {
     const { user } = setup([checkIn('a', '2026-11-15')], async () => {
       throw new Error('offline')
     })
-    await user.click(
-      screen.getByRole('button', { name: 'Delete Sun, Nov 15 check-in' }),
-    )
+    await openDelete(user)
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(
       await screen.findByText("Couldn't delete the check-in: offline"),
     ).toBeInTheDocument()
+  })
+
+  it('hides Edit and Delete until the menu is opened', () => {
+    setup([checkIn('a', '2026-11-15')])
+    expect(screen.queryByRole('menuitem')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Actions for Sun, Nov 15 check-in' }),
+    ).toBeInTheDocument()
+  })
+
+  it('hands the check-in to onEdit from the menu', async () => {
+    const { edited, deleted, user } = setup([
+      checkIn('a', '2026-11-15'),
+      checkIn('b', '2026-11-14'),
+    ])
+    await user.click(
+      screen.getByRole('button', { name: 'Actions for Sat, Nov 14 check-in' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit Sat, Nov 14 check-in' }),
+    )
+    expect(edited).toEqual(['b'])
+    expect(deleted).toEqual([])
   })
 })
