@@ -34,6 +34,27 @@ const pain = (name: string, value: number): void => {
   }
 }
 
+/** The ranges allowed for a run's optional details (also used by the form). */
+export const RUN_LIMITS = {
+  durationSeconds: { min: 1, max: 86_400 },
+  heartRate: { min: 30, max: 250 },
+  cadence: { min: 40, max: 300 },
+  effort: { min: 1, max: 10 },
+} as const
+
+const optionalWhole = (
+  name: string,
+  value: number | undefined,
+  limit: { min: number; max: number },
+): void => {
+  if (value === undefined) return
+  if (!Number.isInteger(value) || value < limit.min || value > limit.max) {
+    fail(
+      `${name} must be a whole number from ${limit.min} to ${limit.max}, got ${value}`,
+    )
+  }
+}
+
 const isoDate = (name: string, value: string): void => {
   const time = Date.parse(`${value}T00:00:00Z`)
   if (
@@ -81,6 +102,22 @@ export const checkRun = (run: Run): void => {
   nonEmpty('run id', run.id)
   isoDate('run date', run.date)
   miles('run miles', run.miles)
+  optionalWhole('run duration', run.durationSeconds, RUN_LIMITS.durationSeconds)
+  optionalWhole(
+    'run average heart rate',
+    run.avgHeartRate,
+    RUN_LIMITS.heartRate,
+  )
+  optionalWhole('run max heart rate', run.maxHeartRate, RUN_LIMITS.heartRate)
+  optionalWhole('run cadence', run.cadence, RUN_LIMITS.cadence)
+  optionalWhole('run effort', run.effort, RUN_LIMITS.effort)
+  if (
+    run.avgHeartRate !== undefined &&
+    run.maxHeartRate !== undefined &&
+    run.maxHeartRate < run.avgHeartRate
+  ) {
+    fail('run max heart rate must be at least the average heart rate')
+  }
 }
 
 export const checkCheckIn = (checkIn: CheckIn): void => {

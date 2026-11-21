@@ -123,6 +123,12 @@ export type Run = {
   date: IsoDate
   miles: number
   source: 'strava' | 'in_app'
+  // Optional details. A run saved before these existed simply lacks them.
+  durationSeconds?: number // total time, whole seconds
+  avgHeartRate?: number // beats per minute
+  maxHeartRate?: number // beats per minute
+  cadence?: number // steps per minute
+  effort?: number // how hard it felt, 1 (very easy) to 10 (all out)
 }
 
 export type MatchResult = {

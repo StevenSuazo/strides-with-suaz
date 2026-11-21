@@ -103,6 +103,11 @@ export const runToRow = (run: Run): Omit<RunRow, 'user_id'> => ({
   date: run.date,
   miles: run.miles,
   source: run.source,
+  duration_seconds: run.durationSeconds ?? null,
+  avg_heart_rate: run.avgHeartRate ?? null,
+  max_heart_rate: run.maxHeartRate ?? null,
+  cadence: run.cadence ?? null,
+  effort: run.effort ?? null,
 })
 
 export const rowToRun = (row: RunRow): Run => ({
@@ -110,6 +115,13 @@ export const rowToRun = (row: RunRow): Run => ({
   date: row.date,
   miles: row.miles,
   source: oneOf('source', row.source, ['strava', 'in_app']),
+  ...(row.duration_seconds === null
+    ? {}
+    : { durationSeconds: row.duration_seconds }),
+  ...(row.avg_heart_rate === null ? {} : { avgHeartRate: row.avg_heart_rate }),
+  ...(row.max_heart_rate === null ? {} : { maxHeartRate: row.max_heart_rate }),
+  ...(row.cadence === null ? {} : { cadence: row.cadence }),
+  ...(row.effort === null ? {} : { effort: row.effort }),
 })
 
 export const checkInToRow = (

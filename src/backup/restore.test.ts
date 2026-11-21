@@ -68,6 +68,15 @@ describe('parseBackup: bad files', () => {
     bad(await withChange((b) => (b.availability = null)), /availability/)
   })
 
+  it('rejects a run with an out-of-range detail', async () => {
+    bad(
+      await withChange(
+        (b) => ((b.runs as { effort: number }[])[0].effort = 11),
+      ),
+      /effort/,
+    )
+  })
+
   it('rejects a run with bad numbers, dates or source', async () => {
     bad(
       await withChange((b) => ((b.runs as { miles: number }[])[0].miles = -1)),

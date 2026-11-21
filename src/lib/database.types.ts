@@ -119,22 +119,37 @@ export type Database = {
       }
       runs: {
         Row: {
+          avg_heart_rate: number | null
+          cadence: number | null
           date: string
+          duration_seconds: number | null
+          effort: number | null
           id: string
+          max_heart_rate: number | null
           miles: number
           source: string
           user_id: string
         }
         Insert: {
+          avg_heart_rate?: number | null
+          cadence?: number | null
           date: string
+          duration_seconds?: number | null
+          effort?: number | null
           id: string
+          max_heart_rate?: number | null
           miles: number
           source: string
           user_id?: string
         }
         Update: {
+          avg_heart_rate?: number | null
+          cadence?: number | null
           date?: string
+          duration_seconds?: number | null
+          effort?: number | null
           id?: string
+          max_heart_rate?: number | null
           miles?: number
           source?: string
           user_id?: string

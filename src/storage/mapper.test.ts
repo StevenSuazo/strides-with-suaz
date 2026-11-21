@@ -146,6 +146,35 @@ describe('runs', () => {
     expect(rowToRun({ user_id: 'u1', ...runToRow(inApp) })).toEqual(inApp)
   })
 
+  it('writes missing details as null and reads null back as missing', () => {
+    expect(runToRow(run)).toMatchObject({
+      duration_seconds: null,
+      avg_heart_rate: null,
+      max_heart_rate: null,
+      cadence: null,
+      effort: null,
+    })
+  })
+
+  it('round-trips the optional details', () => {
+    const detailed: Run = {
+      ...run,
+      durationSeconds: 2310,
+      avgHeartRate: 152,
+      maxHeartRate: 171,
+      cadence: 168,
+      effort: 6,
+    }
+    expect(runToRow(detailed)).toMatchObject({
+      duration_seconds: 2310,
+      avg_heart_rate: 152,
+      max_heart_rate: 171,
+      cadence: 168,
+      effort: 6,
+    })
+    expect(rowToRun({ user_id: 'u1', ...runToRow(detailed) })).toEqual(detailed)
+  })
+
   it('rejects a source the app does not know', () => {
     expect(() =>
       rowToRun({ user_id: 'u1', ...runToRow(run), source: 'garmin' }),
