@@ -449,6 +449,7 @@ button.today-item {
 
 /* The Today page */
 .today-hero {
+  position: relative;
   margin-bottom: var(--space);
   padding: var(--space);
   color: #fff;
@@ -506,4 +507,53 @@ button.today-item {
 
 .today-page li {
   margin-bottom: 4px;
+}
+
+.weather-corner {
+  position: absolute;
+  top: var(--space);
+  right: var(--space);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.weather-temp {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.weather-section h3 {
+  margin-top: 0;
+}
+
+.weather-summary {
+  font-weight: 600;
+}
+
+.weather-note {
+  font-weight: 500;
+}
+
+.weather-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: var(--space);
+}
+
+.weather-form label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+button.link {
+  min-height: 0;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  background: none;
+  border: 0;
 }
