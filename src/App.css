@@ -449,6 +449,7 @@ button.today-item {
 
 /* The Today page */
 .today-hero {
+  display: flow-root;
   position: relative;
   margin-bottom: var(--space);
   padding: var(--space);

@@ -65,8 +65,6 @@ describe('Weather in the header', () => {
     const a = show(ready)
     expect(screen.getByRole('img', { name: 'Sunny' })).toBeInTheDocument()
     expect(screen.getByText('91°')).toBeInTheDocument()
-    expect(screen.getByText('Low 70°')).toBeInTheDocument()
-    expect(screen.getByText('Feels like 95°')).toBeInTheDocument()
     expect(screen.getByText('10% chance of rain')).toBeInTheDocument()
     expect(screen.getByText(/Very hot/)).toBeInTheDocument()
     expect(screen.getByText('Brooklyn, New York')).toBeInTheDocument()

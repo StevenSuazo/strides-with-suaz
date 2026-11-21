@@ -5,7 +5,7 @@
  * WeatherExtras goes last and spans the full width.
  *
  * - With a forecast: the icon and high temperature down the right side, with
- *   the low, feels-like, rain chance and the place ("Change location") under
+ *   the rain chance and the place ("Change location") under
  *   them, then any heat/cold/rain notes across the full width.
  * - With no place saved: "Use my location" and a box for a city or ZIP code,
  *   across the full width.
@@ -58,8 +58,6 @@ export const WeatherSide = ({
         <>
           <WeatherIcon condition={state.forecast.condition} />
           <p className="weather-temp">{`${state.forecast.highF}°`}</p>
-          <p>{`Low ${state.forecast.lowF}°`}</p>
-          <p>{`Feels like ${state.forecast.feelsLikeHighF}°`}</p>
           <p>{`${state.forecast.rainChance}% chance of rain`}</p>
           <PlaceLine label={state.place.label} clear={clear} />
         </>
