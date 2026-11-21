@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { parseForecast, parseOpenMeteoPlace, parseZipPlace } from './parse'
+import {
+  parseForecast,
+  parseOpenMeteoPlace,
+  parseReverseName,
+  parseZipPlace,
+} from './parse'
 
 const daily = {
   daily: {
@@ -105,5 +110,40 @@ describe('parseZipPlace', () => {
   it('is undefined for an unknown zip', () => {
     expect(parseZipPlace({})).toBeUndefined()
     expect(parseZipPlace({ places: [] })).toBeUndefined()
+  })
+})
+
+describe('parseReverseName', () => {
+  it('names a US spot with its state', () => {
+    expect(
+      parseReverseName({
+        locality: 'Bronx',
+        city: 'New York',
+        principalSubdivisionCode: 'US-NY',
+        countryCode: 'US',
+      }),
+    ).toBe('Bronx, NY')
+  })
+
+  it('falls back to the city when there is no locality', () => {
+    expect(
+      parseReverseName({
+        locality: '',
+        city: 'Boston',
+        principalSubdivisionCode: 'US-MA',
+        countryCode: 'US',
+      }),
+    ).toBe('Boston, MA')
+  })
+
+  it('uses the country code outside the US', () => {
+    expect(parseReverseName({ city: 'Paris', countryCode: 'FR' })).toBe(
+      'Paris, FR',
+    )
+  })
+
+  it('is undefined when there is no name', () => {
+    expect(parseReverseName({ countryCode: 'US' })).toBeUndefined()
+    expect(parseReverseName(null)).toBeUndefined()
   })
 })

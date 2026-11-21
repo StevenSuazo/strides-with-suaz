@@ -27,4 +27,6 @@ export type WeatherService = {
   forecast: (place: Place, date: IsoDate) => Promise<DayForecast | undefined>
   // undefined means nothing matched
   findPlace: (query: string) => Promise<Place | undefined>
+  // the name of the spot at these coordinates, like "Bronx, NY"; undefined if unknown
+  nameOf: (lat: number, lon: number) => Promise<string | undefined>
 }
