@@ -5,17 +5,17 @@
  * A header coloured like the run (purple long, blue easy, grey otherwise, as
  * on the Today page) shows the date, the run type, the miles and where the run
  * came from. Down its right side sits the headline: the pace per mile (worked
- * out from time and miles) big, the time under it, and, if the run was matched
- * to a planned workout, how far over or under the plan it was. With no time
- * logged, an "Add details" button takes its place. Below the header, the other
+ * out from time and miles) big, the time under it, and a thumbs up. A run with
+ * no details at all shows a running figure there instead. Below the header, the other
  * details the run has: average and max heart rate, cadence and effort; ones it
  * lacks are left out, and a run with no details at all says how to add them. A
- * matched planned workout is named. Back goes through onBack; Edit run (or Add
- * details) hands the run to onEdit.
+ * matched planned workout is named. Back goes through onBack; Edit run hands
+ * the run to onEdit.
  */
 import type { Run, RunKind, Workout } from '../engine/types'
 import { formatDuration, paceOf } from './duration'
 import { formatDate, formatMiles } from './format'
+import { RunnerIcon, ThumbsUpIcon } from './RunIcons'
 
 type Stat = { label: string; value: string }
 
@@ -60,9 +60,6 @@ export const RunPage = ({
       ? undefined
       : paceOf(run.durationSeconds, run.miles)
   const hasAnyDetail = stats.length > 0 || run.durationSeconds !== undefined
-  const difference = planned
-    ? Math.round((run.miles - planned.miles) * 100) / 100
-    : undefined
   return (
     <>
       <header className={`today-hero hero-${kind ?? 'extra'}`}>
@@ -75,22 +72,16 @@ export const RunPage = ({
           ‹ Back
         </button>
         <div className="run-side">
-          {run.durationSeconds !== undefined ? (
+          {hasAnyDetail ? (
             <>
               {pace && <p className="run-pace">{`${pace} /mi`}</p>}
-              <p>{formatDuration(run.durationSeconds)}</p>
+              {run.durationSeconds !== undefined && (
+                <p>{formatDuration(run.durationSeconds)}</p>
+              )}
+              <ThumbsUpIcon />
             </>
           ) : (
-            <button type="button" onClick={() => onEdit(run)}>
-              Add details
-            </button>
-          )}
-          {difference !== undefined && (
-            <p>
-              {Math.abs(difference) < 0.05
-                ? 'On plan'
-                : `${difference > 0 ? '+' : '-'}${formatMiles(Math.abs(difference))} mi vs plan`}
-            </p>
+            <RunnerIcon />
           )}
         </div>
         <p className="muted">{formatDate(run.date)}</p>

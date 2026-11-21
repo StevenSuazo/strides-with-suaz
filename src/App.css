@@ -600,14 +600,6 @@ button.link {
   font-weight: 700;
 }
 
-.today-hero .run-side button {
-  min-height: 0;
-  padding: 6px 12px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
 .run-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

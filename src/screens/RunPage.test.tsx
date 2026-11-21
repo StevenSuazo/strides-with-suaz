@@ -114,42 +114,37 @@ describe('RunPage', () => {
 })
 
 describe('RunPage: the header side', () => {
-  const planned = (miles: number): Workout => ({
-    id: 'w2-2',
-    date: '2026-11-18',
-    miles,
-    kind: 'easy',
-  })
-
-  it('shows how far over the plan the run was', () => {
-    show(base, 'easy', planned(3.8))
-    expect(screen.getByText('+0.2 mi vs plan')).toBeInTheDocument()
-  })
-
-  it('shows how far under the plan it was', () => {
-    show(base, 'easy', planned(4.5))
-    expect(screen.getByText('-0.5 mi vs plan')).toBeInTheDocument()
-  })
-
-  it('says on plan when it is within a few hundredths', () => {
-    show(base, 'easy', planned(4.02))
-    expect(screen.getByText('On plan')).toBeInTheDocument()
-  })
-
-  it('shows nothing about the plan when there was no match', () => {
+  it('shows a running figure when the run has no details', () => {
     show(base, 'easy')
-    expect(screen.queryByText(/vs plan|On plan/)).not.toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Running' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('img', { name: 'Thumbs up' }),
+    ).not.toBeInTheDocument()
   })
 
-  it('offers Add details when no time is logged, and it opens edit', async () => {
-    const onEdit = vi.fn()
-    show(base, 'easy', undefined, { onEdit })
-    await userEvent.click(screen.getByRole('button', { name: 'Add details' }))
-    expect(onEdit).toHaveBeenCalledWith(base)
-  })
-
-  it('does not offer Add details once a time is logged', () => {
+  it('shows pace, time and a thumbs up when the run has details', () => {
     show({ ...base, durationSeconds: 2310 }, 'easy')
+    expect(screen.getByText('9:38 /mi')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Thumbs up' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('img', { name: 'Running' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows the thumbs up for other details even without a time', () => {
+    show({ ...base, avgHeartRate: 150 }, 'easy')
+    expect(screen.getByRole('img', { name: 'Thumbs up' })).toBeInTheDocument()
+    expect(screen.queryByText(/\/mi/)).not.toBeInTheDocument()
+  })
+
+  it('no longer says how far over or under the plan, or offers Add details', () => {
+    show({ ...base, durationSeconds: 2310 }, 'easy', {
+      id: 'w2-2',
+      date: '2026-11-18',
+      miles: 3.8,
+      kind: 'easy',
+    })
+    expect(screen.queryByText(/vs plan|On plan/)).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Add details' }),
     ).not.toBeInTheDocument()
