@@ -621,3 +621,50 @@ button.link {
   padding: 0;
   text-align: center;
 }
+
+/* Calendar */
+.calendar-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-week .week-strip {
+  margin: 0 0 8px;
+  background: transparent;
+  border-bottom: 0;
+  box-shadow: none;
+}
+
+.calendar-current {
+  margin: 0 0 4px;
+}
+
+button.calendar-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 12px;
+  width: 100%;
+  min-height: 0;
+  padding: 10px 0;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+}
+
+.calendar-row-main {
+  display: flex;
+  gap: 8px;
+}
+
+.calendar-row-miles {
+  font-weight: 600;
+  text-align: right;
+}
+
+.calendar-row-gate {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+}

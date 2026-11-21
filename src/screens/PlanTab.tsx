@@ -4,11 +4,13 @@
  * Planned runs show done, missed or coming up against your logged runs, can be
  * re-paired by hand (or handed back to the app), and sit beside the
  * availability editor that drives the week's plan. Saving availability re-plans
- * the week. None of this changes the gate, which only looks at miles and pain.
+ * the week. Below sits the calendar: this week plus every finished week; tapping a
+ * day with a run calls onOpenRun. None of this changes the gate, which only looks at miles and pain.
  */
 import type { IsoDate, Run } from '../engine/types'
 import type { PlanView } from '../plan/progress'
 import { AvailabilityEditor } from './AvailabilityEditor'
+import { CalendarCard } from './CalendarCard'
 import { PlannedWeek } from './PlannedWeek'
 import { ProgressChart } from './ProgressChart'
 import type { WeekSchedule } from './useWeekSchedule'
@@ -18,11 +20,13 @@ export const PlanTab = ({
   runs,
   today,
   schedule,
+  onOpenRun,
 }: {
   view: PlanView
   runs: Run[]
   today: IsoDate
   schedule: WeekSchedule
+  onOpenRun: (run: Run) => void
 }) => (
   <>
     <ProgressChart view={view} />
@@ -52,5 +56,21 @@ export const PlanTab = ({
         </details>
       </section>
     )}
+    <CalendarCard
+      view={view}
+      runs={runs}
+      today={today}
+      onOpenRun={onOpenRun}
+      current={
+        schedule.status === 'ready'
+          ? {
+              weekIndex: schedule.weekIndex,
+              weekStart: schedule.weekStart,
+              rows: schedule.rows,
+              extraRuns: schedule.extraRuns,
+            }
+          : undefined
+      }
+    />
   </>
 )

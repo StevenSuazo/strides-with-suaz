@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatMiles } from './format'
+import { formatDate, formatMiles, formatRange } from './format'
 
 describe('formatDate', () => {
   it('shows the weekday, month and day', () => {
@@ -32,5 +32,16 @@ describe('formatMiles', () => {
     expect(formatMiles(2.5)).toBe('2.5')
     expect(formatMiles(4.01)).toBe('4.01')
     expect(formatMiles(8.5600001)).toBe('8.56')
+  })
+})
+
+describe('formatRange', () => {
+  it('shares the month when both dates are in it', () => {
+    expect(formatRange('2026-11-09', '2026-11-15')).toBe('Nov 9–15')
+  })
+
+  it('names both months when the week crosses one', () => {
+    expect(formatRange('2026-11-30', '2026-12-06')).toBe('Nov 30 – Dec 6')
+    expect(formatRange('2026-12-28', '2027-01-03')).toBe('Dec 28 – Jan 3')
   })
 })
