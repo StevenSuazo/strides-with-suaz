@@ -107,6 +107,48 @@ describe('week results', () => {
     expect(await storage.getWeekResults()).toEqual([week(1)])
   })
 
+  it("keeps a run's optional details", async () => {
+    const storage = createMemoryStorage()
+    const run = {
+      id: 'r1',
+      date: '2026-11-15',
+      miles: 3,
+      source: 'in_app' as const,
+      durationSeconds: 1800,
+      avgHeartRate: 150,
+      maxHeartRate: 170,
+      cadence: 170,
+      effort: 5,
+    }
+    await storage.saveRun(run)
+    expect(await storage.getRuns()).toEqual([run])
+  })
+
+  it('rejects run details that are out of range or inconsistent', async () => {
+    const storage = createMemoryStorage()
+    const base = {
+      id: 'r1',
+      date: '2026-11-15',
+      miles: 3,
+      source: 'in_app' as const,
+    }
+    for (const bad of [
+      { durationSeconds: 0 },
+      { durationSeconds: 90_000 },
+      { avgHeartRate: 20 },
+      { maxHeartRate: 300 },
+      { avgHeartRate: 160, maxHeartRate: 150 },
+      { cadence: 10 },
+      { effort: 0 },
+      { effort: 11 },
+      { effort: 5.5 },
+    ]) {
+      await expect(storage.saveRun({ ...base, ...bad })).rejects.toThrow(
+        RangeError,
+      )
+    }
+  })
+
   it('rejects a weekIndex that is not a whole number from 1', async () => {
     const storage = createMemoryStorage()
     await expect(storage.saveWeekResult(week(0))).rejects.toThrow(RangeError)

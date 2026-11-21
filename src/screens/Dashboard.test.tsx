@@ -583,7 +583,8 @@ describe('Dashboard: collapsed forms', () => {
     await screen.findByText('Edit availability')
     expect(openStates()).toEqual([false])
     goTo('Log')
-    expect(openStates()).toEqual([false, false])
+    // Log a run, its "More details" section, and Add a check-in
+    expect(openStates()).toEqual([false, false, false])
   })
 
   it('opens the run form when you start editing a run', async () => {

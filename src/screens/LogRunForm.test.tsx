@@ -193,3 +193,115 @@ describe('LogRunForm: editing a run', () => {
     ).not.toBeInTheDocument()
   })
 })
+
+describe('LogRunForm: optional details', () => {
+  const open = (user: ReturnType<typeof userEvent.setup>) =>
+    user.click(screen.getByText('More details (optional)'))
+
+  it('saves a plain run with no details when they are left blank', async () => {
+    const { saved, user } = setup()
+    await user.type(miles(), '3')
+    await user.click(submit())
+    expect(saved[0]).toEqual({
+      id: 'new-1',
+      date: '2026-11-18',
+      miles: 3,
+      source: 'in_app',
+    })
+  })
+
+  it('saves the time, heart rates, cadence and effort when filled in', async () => {
+    const { saved, user } = setup()
+    await user.type(miles(), '3')
+    await open(user)
+    await user.type(screen.getByLabelText('Time'), '38:30')
+    await user.type(screen.getByLabelText('Average heart rate'), '152')
+    await user.type(screen.getByLabelText('Max heart rate'), '171')
+    await user.type(screen.getByLabelText('Cadence'), '168')
+    await user.selectOptions(screen.getByLabelText(/Effort/), '6')
+    await user.click(submit())
+    expect(saved[0]).toMatchObject({
+      durationSeconds: 2310,
+      avgHeartRate: 152,
+      maxHeartRate: 171,
+      cadence: 168,
+      effort: 6,
+    })
+  })
+
+  it('clears the details after a new run is saved', async () => {
+    const { user } = setup()
+    await user.type(miles(), '3')
+    await open(user)
+    await user.type(screen.getByLabelText('Cadence'), '168')
+    await user.click(submit())
+    await screen.findByText('Run saved.')
+    expect((screen.getByLabelText('Cadence') as HTMLInputElement).value).toBe(
+      '',
+    )
+  })
+
+  it.each([
+    ['Time', 'abc', 'Enter the time like 38:30 or 1:05:30.'],
+    [
+      'Average heart rate',
+      '20',
+      'Average heart rate must be a whole number from 30 to 250.',
+    ],
+    [
+      'Max heart rate',
+      '300',
+      'Max heart rate must be a whole number from 30 to 250.',
+    ],
+    ['Cadence', '10', 'Cadence must be a whole number from 40 to 300.'],
+  ])('rejects a bad %s without saving', async (label, value, message) => {
+    const { saved, user } = setup()
+    await user.type(miles(), '3')
+    await open(user)
+    await user.type(screen.getByLabelText(label), value)
+    await user.click(submit())
+    expect(await screen.findByText(message)).toBeInTheDocument()
+    expect(saved).toEqual([])
+  })
+
+  it('rejects a max heart rate below the average', async () => {
+    const { saved, user } = setup()
+    await user.type(miles(), '3')
+    await open(user)
+    await user.type(screen.getByLabelText('Average heart rate'), '160')
+    await user.type(screen.getByLabelText('Max heart rate'), '150')
+    await user.click(submit())
+    expect(
+      await screen.findByText(
+        'Max heart rate can’t be lower than the average.',
+      ),
+    ).toBeInTheDocument()
+    expect(saved).toEqual([])
+  })
+
+  it('fills in the details of a run being edited, and blanking one removes it', async () => {
+    const run: Run = {
+      id: 'r1',
+      date: '2026-11-15',
+      miles: 4,
+      source: 'strava',
+      durationSeconds: 2310,
+      avgHeartRate: 152,
+      cadence: 168,
+    }
+    const { saved, user } = setup({ editing: run })
+    expect((screen.getByLabelText('Time') as HTMLInputElement).value).toBe(
+      '38:30',
+    )
+    await user.clear(screen.getByLabelText('Cadence'))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(saved[0]).toEqual({
+      id: 'r1',
+      date: '2026-11-15',
+      miles: 4,
+      source: 'strava',
+      durationSeconds: 2310,
+      avgHeartRate: 152,
+    })
+  })
+})
