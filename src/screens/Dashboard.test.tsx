@@ -7,6 +7,7 @@ import {
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import { buildBackup } from '../backup/backup'
 import { StorageProvider } from '../storage/StorageProvider'
 import type { AppStorage } from '../storage/types'
 import { emptyStorage, seededStorage } from '../test/fixtures'
@@ -430,6 +431,40 @@ describe('Dashboard: undoing a hand match', () => {
       target: { value: '__auto' },
     })
     await waitFor(async () => expect(await storage.getOverrides()).toEqual({}))
+  })
+})
+
+describe('Dashboard: restore from backup', () => {
+  const backupWithMatch = async () => {
+    const source = await seededStorage()
+    await source.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    await source.saveOverride('r1', 'w2-2')
+    return JSON.stringify(await buildBackup(source, '2026-11-18T05:00:00Z', 19))
+  }
+
+  it('brings the runs and hand matches back and shows them', async () => {
+    const backup = await backupWithMatch()
+    const storage = emptyStorage()
+    const user = show(storage)
+    await screen.findByText('No runs logged yet.')
+    await user.upload(
+      screen.getByLabelText('Restore from backup'),
+      new File([backup], 'b.json', { type: 'application/json' }),
+    )
+    await user.click(await screen.findByRole('button', { name: 'Restore' }))
+    expect(await screen.findByText(/Restored 4 runs/)).toBeInTheDocument()
+    await waitFor(() =>
+      expect(
+        (screen.getByLabelText('Run for Wed, Nov 18') as HTMLSelectElement)
+          .value,
+      ).toBe('r1'),
+    )
+    expect((await storage.getRuns()).length).toBe(4)
   })
 })
 

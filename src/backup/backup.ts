@@ -2,7 +2,7 @@
  * backup.ts: gather everything stored into one plain object for a JSON file.
  *
  * Read-only. Availability is saved per week, so it is read for weeks
- * 1 to totalWeeks and kept under the week number. Restore is not built yet.
+ * 1 to totalWeeks and kept under the week number. restore.ts reads it back.
  */
 import type {
   CheckIn,
