@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { AccountCard } from './auth/AccountCard'
 import { AuthProvider } from './auth/AuthProvider'
 import { LoginGate } from './auth/LoginGate'
 import { createSupabaseAuth } from './auth/supabase'
@@ -21,7 +22,7 @@ createRoot(document.getElementById('root')!).render(
     <AuthProvider auth={auth}>
       <LoginGate>
         <SupabaseStorageProvider>
-          <App />
+          <App account={<AccountCard />} />
         </SupabaseStorageProvider>
       </LoginGate>
     </AuthProvider>

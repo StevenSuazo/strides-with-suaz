@@ -31,6 +31,15 @@ const show = (storage: AppStorage) => {
   return userEvent.setup()
 }
 
+const goTo = (name: string) =>
+  fireEvent.click(screen.getByRole('button', { name }))
+
+// Tabs appear once the plan has loaded; Home is the tab that starts open.
+const openTab = async (name: string) => {
+  await screen.findByRole('navigation', { name: 'Main' })
+  goTo(name)
+}
+
 describe('Dashboard: loading', () => {
   it('shows a loading message, then the week', async () => {
     show(await seededStorage())
@@ -54,6 +63,7 @@ describe('Dashboard: loading', () => {
 describe('Dashboard: runs', () => {
   it('lists the saved runs under the week', async () => {
     show(await seededStorage())
+    await openTab('Log')
     expect(
       await screen.findByText(/Sun, Nov 15: 4.01 miles/),
     ).toBeInTheDocument()
@@ -64,8 +74,10 @@ describe('Dashboard: runs', () => {
     const storage = await seededStorage()
     const user = show(storage)
     await screen.findByText('0 of 9.3 miles so far')
+    goTo('Log')
     await user.type(screen.getByLabelText('Miles'), '3.1')
     await user.click(screen.getByRole('button', { name: 'Log run' }))
+    goTo('Home')
     expect(
       await screen.findByText('3.1 of 9.3 miles so far'),
     ).toBeInTheDocument()
@@ -82,7 +94,7 @@ describe('Dashboard: runs', () => {
   it('does not save a bad run', async () => {
     const storage = await seededStorage()
     const user = show(storage)
-    await screen.findByText('Week 2 of 19')
+    await openTab('Log')
     await user.click(screen.getByRole('button', { name: 'Log run' }))
     expect(
       await screen.findByText('Enter the miles you ran (more than 0).'),
@@ -93,7 +105,7 @@ describe('Dashboard: runs', () => {
   it('edits a run in place, without adding a duplicate', async () => {
     const storage = await seededStorage()
     const user = show(storage)
-    await screen.findByText('Week 2 of 19')
+    await openTab('Log')
     await user.click(
       screen.getByRole('button', { name: 'Actions for Sun, Nov 15 run' }),
     )
@@ -113,7 +125,7 @@ describe('Dashboard: runs', () => {
 
   it('goes back to logging a new run when you cancel an edit', async () => {
     const user = show(await seededStorage())
-    await screen.findByText('Week 2 of 19')
+    await openTab('Log')
     await user.click(
       screen.getByRole('button', { name: 'Actions for Sun, Nov 15 run' }),
     )
@@ -135,6 +147,7 @@ describe('Dashboard: runs', () => {
     })
     const user = show(storage)
     await screen.findByText('3 of 9.3 miles so far')
+    goTo('Log')
     await user.click(
       screen.getByRole('button', { name: 'Actions for Tue, Nov 17 run' }),
     )
@@ -142,15 +155,21 @@ describe('Dashboard: runs', () => {
       screen.getByRole('menuitem', { name: 'Delete Tue, Nov 17 run' }),
     )
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
-    expect(await screen.findByText('0 of 9.3 miles so far')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/Tue, Nov 17: 3 miles/),
+      ).not.toBeInTheDocument(),
+    )
     expect(await storage.getRuns()).toHaveLength(3)
-    expect(screen.queryByText(/Tue, Nov 17: 3 miles/)).not.toBeInTheDocument()
+    goTo('Home')
+    expect(await screen.findByText('0 of 9.3 miles so far')).toBeInTheDocument()
   })
 
   it('changes this week’s target when an old run is fixed', async () => {
     const storage = await seededStorage()
     const user = show(storage)
     await screen.findByText('Target: 9.3 miles')
+    goTo('Log')
     await user.click(
       screen.getByRole('button', { name: 'Actions for Sun, Nov 15 run' }),
     )
@@ -161,6 +180,7 @@ describe('Dashboard: runs', () => {
     await user.clear(miles)
     await user.type(miles, '1')
     await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    goTo('Home')
     await waitFor(() =>
       expect(screen.queryByText('Target: 9.3 miles')).not.toBeInTheDocument(),
     )
@@ -181,6 +201,7 @@ describe('Dashboard: check-ins', () => {
       entries: [],
     })
     show(storage)
+    await openTab('Log')
     expect(
       await screen.findByText('Sun, Nov 15: after a run, felt good, no pain.'),
     ).toBeInTheDocument()
@@ -190,16 +211,20 @@ describe('Dashboard: check-ins', () => {
     const storage = await seededStorage()
     const user = show(storage)
     await screen.findByText('Target: 9.3 miles')
+    goTo('Log')
     fireEvent.change(screen.getByLabelText('Check-in date'), {
       target: { value: '2026-11-15' },
     })
     await user.click(screen.getByRole('button', { name: 'Add a sore spot' }))
     await user.selectOptions(screen.getByLabelText('Pain 1'), '8')
     await user.click(screen.getByRole('button', { name: 'Save check-in' }))
+    await waitFor(async () =>
+      expect(await storage.getCheckIns()).toHaveLength(1),
+    )
+    goTo('Home')
     await waitFor(() =>
       expect(screen.queryByText('Target: 9.3 miles')).not.toBeInTheDocument(),
     )
-    expect(await storage.getCheckIns()).toHaveLength(1)
     const [week] = await storage.getWeekResults()
     expect(week.highestPain).toBe(8)
   })
@@ -214,7 +239,7 @@ describe('Dashboard: check-ins', () => {
       entries: [{ area: 'knee', side: 'left', pain: 8 }],
     })
     const user = show(storage)
-    await screen.findByText('Week 2 of 19')
+    await openTab('Log')
     await user.click(
       screen.getByRole('button', { name: 'Actions for Sun, Nov 15 check-in' }),
     )
@@ -224,6 +249,7 @@ describe('Dashboard: check-ins', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(await screen.findByText('No check-ins yet.')).toBeInTheDocument()
     expect(await storage.getCheckIns()).toEqual([])
+    goTo('Home')
     await waitFor(() =>
       expect(screen.getByText('Target: 9.3 miles')).toBeInTheDocument(),
     )
@@ -247,6 +273,7 @@ describe('Dashboard: editing a check-in', () => {
   it('opens the form filled in, and saves over the same check-in', async () => {
     const storage = await saved()
     const user = show(storage)
+    await openTab('Log')
     await screen.findByText(
       'Sun, Nov 15: after a run, felt good, no pain. Note: easy',
     )
@@ -275,6 +302,7 @@ describe('Dashboard: editing a check-in', () => {
 
   it('goes back to adding when you cancel', async () => {
     const user = show(await saved())
+    await openTab('Log')
     await screen.findByText(/Sun, Nov 15: after a run/)
     await user.click(
       screen.getByRole('button', { name: 'Actions for Sun, Nov 15 check-in' }),
@@ -300,6 +328,7 @@ describe('Dashboard: schedule', () => {
 
   it('plans this week from the default all-open availability', async () => {
     await renderIt()
+    await openTab('Plan')
     expect(
       await screen.findByText('Fri, Nov 20: long run, 4.7 miles'),
     ).toBeInTheDocument()
@@ -307,6 +336,7 @@ describe('Dashboard: schedule', () => {
 
   it('saves availability and re-plans the week', async () => {
     await renderIt()
+    await openTab('Plan')
     await screen.findByText('Fri, Nov 20: long run, 4.7 miles')
     fireEvent.change(screen.getByLabelText('Friday'), {
       target: { value: 'off' },
@@ -326,6 +356,7 @@ describe('Dashboard: schedule', () => {
         <Dashboard today="2026-11-17" newId={() => 'x'} />
       </StorageProvider>,
     )
+    await openTab('Plan')
     await screen.findByRole('heading', { name: 'Planned runs' })
     fireEvent.change(screen.getByLabelText('Friday'), {
       target: { value: 'off' },
@@ -359,6 +390,7 @@ describe('Dashboard: schedule', () => {
         <Dashboard today="2026-11-17" newId={() => 'x'} />
       </StorageProvider>,
     )
+    await openTab('Plan')
     await screen.findByRole('heading', { name: 'Planned runs' })
     expect((screen.getByLabelText('Friday') as HTMLSelectElement).value).toBe(
       'off',
@@ -373,8 +405,12 @@ describe('Dashboard: schedule', () => {
       </StorageProvider>,
     )
     await screen.findByText(/Plan starts in/)
+    goTo('Plan')
     expect(
       screen.queryByRole('button', { name: 'Save availability' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Planned runs' }),
     ).not.toBeInTheDocument()
   })
 })
@@ -393,6 +429,7 @@ describe('Dashboard: planned vs done', () => {
         <Dashboard today="2026-11-17" newId={() => 'x'} />
       </StorageProvider>,
     )
+    await openTab('Plan')
     return storage
   }
 
@@ -430,6 +467,7 @@ describe('Dashboard: planned vs done', () => {
         <Dashboard today="2026-11-17" newId={() => 'x'} />
       </StorageProvider>,
     )
+    await openTab('Plan')
     await screen.findByText('Done: ran 2.5 miles')
     expect(
       (screen.getByLabelText('Run for Wed, Nov 18') as HTMLSelectElement).value,
@@ -452,6 +490,7 @@ describe('Dashboard: undoing a hand match', () => {
         <Dashboard today="2026-11-17" newId={() => 'x'} />
       </StorageProvider>,
     )
+    await openTab('Plan')
     await screen.findByText('Done: ran 2.5 miles')
     fireEvent.change(screen.getByLabelText('Run for Wed, Nov 18'), {
       target: { value: '__auto' },
@@ -489,6 +528,7 @@ describe('Dashboard: undoing a hand match', () => {
         <Dashboard today="2026-11-17" newId={() => 'x'} />
       </StorageProvider>,
     )
+    await openTab('Plan')
     await screen.findByText('Done: ran 2.5 miles')
     fireEvent.change(screen.getByLabelText('Run for Wed, Nov 18'), {
       target: { value: '__auto' },
@@ -514,13 +554,14 @@ describe('Dashboard: restore from backup', () => {
     const backup = await backupWithMatch()
     const storage = emptyStorage()
     const user = show(storage)
-    await screen.findByText('No runs logged yet.')
+    await openTab('More')
     await user.upload(
       screen.getByLabelText('Restore from backup'),
       new File([backup], 'b.json', { type: 'application/json' }),
     )
     await user.click(await screen.findByRole('button', { name: 'Restore' }))
     expect(await screen.findByText(/Restored 4 runs/)).toBeInTheDocument()
+    goTo('Plan')
     await waitFor(() =>
       expect(
         (screen.getByLabelText('Run for Wed, Nov 18') as HTMLSelectElement)
@@ -537,14 +578,16 @@ describe('Dashboard: collapsed forms', () => {
 
   it('starts with every form collapsed', async () => {
     show(await seededStorage())
+    await openTab('Plan')
     await screen.findByText('Edit availability')
-    expect(document.querySelectorAll('details').length).toBe(3)
-    expect(openStates()).toEqual([false, false, false])
+    expect(openStates()).toEqual([false])
+    goTo('Log')
+    expect(openStates()).toEqual([false, false])
   })
 
   it('opens the run form when you start editing a run', async () => {
     show(await seededStorage())
-    await screen.findByText('Edit availability')
+    await openTab('Log')
     fireEvent.click(
       screen.getByRole('button', { name: 'Actions for Sun, Nov 15 run' }),
     )
@@ -560,10 +603,11 @@ describe('Dashboard: collapsed forms', () => {
 
   it('labels the sections you can open', async () => {
     show(await seededStorage())
-    await screen.findByText('Edit availability')
+    await openTab('Plan')
+    expect(await screen.findByText('Edit availability')).toBeInTheDocument()
+    goTo('Log')
     expect(screen.getByText('Log a run')).toBeInTheDocument()
     expect(screen.getByText('Add a check-in')).toBeInTheDocument()
-    expect(screen.getByText('Edit availability')).toBeInTheDocument()
   })
 })
 
@@ -588,11 +632,13 @@ describe('Dashboard: week strip', () => {
   it('updates when you save availability', async () => {
     show(await seededStorage())
     await screen.findByRole('group', { name: /Fri, Nov 20: long run/ })
+    goTo('Plan')
     fireEvent.change(screen.getByLabelText('Friday'), {
       target: { value: 'off' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save availability' }))
     await screen.findByText('Availability saved.')
+    goTo('Home')
     expect(
       screen.queryByRole('group', { name: /Fri, Nov 20: long run/ }),
     ).not.toBeInTheDocument()
@@ -626,7 +672,7 @@ describe('Dashboard: week strip follows hand matches', () => {
 describe('Dashboard: run types', () => {
   it("marks last week's longest run as long", async () => {
     show(await seededStorage())
-    await screen.findByText('Edit availability')
+    await openTab('Log')
     const items = screen
       .getAllByRole('listitem')
       .filter((li) => li.querySelector('.run-menu'))
@@ -646,7 +692,7 @@ describe('Dashboard: run types', () => {
       source: 'in_app',
     })
     show(storage)
-    await screen.findByText('Done: ran 2.5 miles')
+    await openTab('Log')
     const runItem = () =>
       screen
         .getAllByRole('listitem')
@@ -663,19 +709,22 @@ describe('Dashboard: run types', () => {
 })
 
 describe('Dashboard: progress chart', () => {
-  it('shows the plan chart between this week and the planned runs', async () => {
+  it('shows the plan chart above the planned runs', async () => {
     show(await seededStorage())
+    await openTab('Plan')
     const chart = await screen.findByRole('heading', { name: 'Your plan' })
-    const week = screen.getByText('Week 2 of 19')
     const planned = await screen.findByRole('heading', { name: 'Planned runs' })
-    const follows = (a: Node, b: Node) =>
-      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(follows(week, chart)).toBe(true)
-    expect(follows(chart, planned)).toBe(true)
+    expect(
+      Boolean(
+        chart.compareDocumentPosition(planned) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true)
   })
 
   it("shows this week's bar and last week's result", async () => {
     show(await seededStorage())
+    await openTab('Plan')
     await screen.findByRole('heading', { name: 'Your plan' })
     const svg = screen.getByRole('img', {
       name: 'Weekly miles: target and actual',
@@ -686,15 +735,18 @@ describe('Dashboard: progress chart', () => {
 
   it('updates when you log a run', async () => {
     const user = show(await seededStorage())
+    await openTab('Plan')
     await screen.findByRole('heading', { name: 'Your plan' })
     const svg = () =>
       screen.getByRole('img', { name: 'Weekly miles: target and actual' })
     const height = () =>
       Number(svg().querySelector('.bar-current')?.getAttribute('height'))
     const before = height()
+    goTo('Log')
     await user.click(screen.getByText('Log a run'))
     await user.type(screen.getByLabelText('Miles'), '3')
     await user.click(screen.getByRole('button', { name: 'Log run' }))
+    goTo('Plan')
     await waitFor(() => expect(height()).toBeGreaterThan(before))
   })
 })
@@ -729,11 +781,16 @@ describe('Dashboard: today card', () => {
   it("turns to done when you log today's run", async () => {
     await showOn('2026-11-18')
     await screen.findByText('To do')
+    goTo('Log')
     fireEvent.click(screen.getByText('Log a run'))
     fireEvent.change(screen.getByLabelText('Miles'), {
       target: { value: '2.4' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Log run' }))
+    await waitFor(() =>
+      expect(screen.getByLabelText('Miles')).toHaveValue(null),
+    )
+    goTo('Home')
     expect(await screen.findByText('Ran 2.4 miles')).toBeInTheDocument()
   })
 
@@ -742,6 +799,94 @@ describe('Dashboard: today card', () => {
     await screen.findByText(/Plan starts in/)
     expect(
       screen.queryByRole('heading', { name: "Today's workout" }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('Dashboard: tabs', () => {
+  it('opens on Home with the front-page content only', async () => {
+    show(await seededStorage())
+    expect(await screen.findByText('Week 2 of 19')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(screen.queryByText('Log a run')).not.toBeInTheDocument()
+    expect(screen.queryByText('Edit availability')).not.toBeInTheDocument()
+    expect(screen.queryByText('Backup')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Your plan' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows only the Plan tab content on Plan', async () => {
+    show(await seededStorage())
+    await openTab('Plan')
+    expect(
+      await screen.findByRole('heading', { name: 'Your plan' }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Planned runs' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Week 2 of 19')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Plan' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+  })
+
+  it('shows runs and check-ins on Log', async () => {
+    show(await seededStorage())
+    await openTab('Log')
+    expect(screen.getByRole('heading', { name: 'Runs' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Check-ins' }),
+    ).toBeInTheDocument()
+  })
+
+  it('shows backup, restore and the account card on More', async () => {
+    const storage = await seededStorage()
+    let count = 0
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard
+          today="2026-11-17"
+          newId={() => `t-${++count}`}
+          account={<p>Account slot</p>}
+        />
+      </StorageProvider>,
+    )
+    await screen.findByText('Week 2 of 19')
+    expect(screen.queryByText('Account slot')).not.toBeInTheDocument()
+    goTo('More')
+    expect(screen.getByRole('heading', { name: 'Backup' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Download backup' }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Restore from backup')).toBeInTheDocument()
+    expect(screen.getByText('Account slot')).toBeInTheDocument()
+  })
+
+  it('keeps the week as you left it when you change tabs', async () => {
+    show(await seededStorage())
+    await openTab('Plan')
+    await screen.findByText('Fri, Nov 20: long run, 4.7 miles')
+    fireEvent.change(screen.getByLabelText('Friday'), {
+      target: { value: 'off' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save availability' }))
+    await screen.findByText('Availability saved.')
+    goTo('Log')
+    goTo('Plan')
+    expect((screen.getByLabelText('Friday') as HTMLSelectElement).value).toBe(
+      'off',
+    )
+  })
+
+  it('does not show the tabs while loading', () => {
+    show(emptyStorage())
+    expect(
+      screen.queryByRole('navigation', { name: 'Main' }),
     ).not.toBeInTheDocument()
   })
 })

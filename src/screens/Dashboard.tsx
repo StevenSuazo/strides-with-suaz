@@ -1,49 +1,61 @@
 /**
- * Dashboard.tsx: the main page. This week, plus logging and fixing runs.
+ * Dashboard.tsx: the main page, in four tabs.
  *
- * Loads the plan once with usePlan and shares it with the pieces below: runs
- * and check-ins, each with a form and a list. After any save or delete it reloads, so the week's numbers (and next week's
- * target) follow your runs. Editing a run swaps the form into edit mode.
- * After a restore, the week schedule is reloaded from scratch too, since a
- * backup can bring back availability and hand matches.
- * newId makes ids for new runs and can be replaced in tests.
+ * - Home: the week strip, today's workout and this week.
+ * - Plan: the progress chart and this week's planned runs.
+ * - Log: your runs and check-ins, each with a form and a list.
+ * - More: backup and restore, plus whatever you pass as `account` (the
+ *   Sign out card).
+ * Loads the plan once with usePlan and shares it with the tabs. After any save
+ * or delete it reloads, so the week's numbers (and next week's target) follow
+ * your runs. Editing a run or a check-in swaps its form into edit mode. After a
+ * restore, this week's availability and hand matches reload too. The week's
+ * schedule and the open tab live here, so they survive changing tabs.
+ * newId makes ids for new runs and check-ins and can be replaced in tests.
  */
-import { useState } from 'react'
-import type { CheckIn, IsoDate, Run, RunKind } from '../engine/types'
+import { useState, type ReactNode } from 'react'
+import type { CheckIn, IsoDate, Run } from '../engine/types'
 import { runKinds } from '../plan/runKinds'
 import { PLAN } from '../plan/settings'
-import { usePlan } from '../plan/usePlan'
+import { usePlan, type PlanState } from '../plan/usePlan'
 import { useStorage } from '../storage/useStorage'
 import { BackupButton } from './BackupButton'
 import { CheckInForm } from './CheckInForm'
 import { CheckInList } from './CheckInList'
+import { HomeTab } from './HomeTab'
 import { LogRunForm } from './LogRunForm'
-import { ProgressChart } from './ProgressChart'
+import { PlanTab } from './PlanTab'
 import { RestoreButton } from './RestoreButton'
 import { RunList } from './RunList'
-import { WeekSchedule } from './WeekSchedule'
-import { ThisWeek } from './ThisWeek'
+import { TabBar, type TabId } from './TabBar'
+import { useWeekSchedule } from './useWeekSchedule'
 
 const defaultNewId = (): string => `app-${crypto.randomUUID()}`
 
-export const Dashboard = ({
+type Ready = Extract<PlanState, { status: 'ready' }>
+
+const Tabs = ({
+  state,
+  reload,
   today,
-  newId = defaultNewId,
+  newId,
+  account,
 }: {
+  state: Ready
+  reload: () => void
   today: IsoDate
-  newId?: () => string
+  newId: () => string
+  account?: ReactNode
 }) => {
   const storage = useStorage()
-  const { state, reload } = usePlan(today)
+  const [tab, setTab] = useState<TabId>('home')
   const [editing, setEditing] = useState<Run | undefined>()
   const [editingCheckIn, setEditingCheckIn] = useState<CheckIn | undefined>()
-  const [restoreCount, setRestoreCount] = useState(0)
-  const [matchedKinds, setMatchedKinds] = useState<Record<string, RunKind>>({})
-
-  if (state.status === 'loading') return <p>Loading your plan…</p>
-  if (state.status === 'error') {
-    return <p role="alert">{`Couldn't load your plan: ${state.message}`}</p>
-  }
+  const {
+    schedule,
+    kinds: matchedKinds,
+    refresh,
+  } = useWeekSchedule(state.view, state.runs, today)
 
   // Runs matched to this week's plan take the planned type; the rest use the
   // longest-run-of-the-week rule.
@@ -75,70 +87,104 @@ export const Dashboard = ({
 
   return (
     <>
-      <WeekSchedule
-        key={restoreCount}
-        view={state.view}
-        runs={state.runs}
-        today={today}
-        summary={
-          <>
-            <ThisWeek view={state.view} today={today} />
-            <ProgressChart view={state.view} />
-          </>
-        }
-        onMatchedKinds={setMatchedKinds}
-      />
-      <section className="card">
-        <h2>Runs</h2>
-        <details open={editing ? true : undefined}>
-          <summary>{editing ? 'Edit run' : 'Log a run'}</summary>
-          <LogRunForm
-            key={editing?.id ?? 'new'}
-            today={today}
-            editing={editing}
-            newId={newId}
-            onSave={save}
-            onCancel={() => setEditing(undefined)}
-          />
-        </details>
-        <RunList
+      {tab === 'home' && (
+        <HomeTab view={state.view} today={today} schedule={schedule} />
+      )}
+      {tab === 'plan' && (
+        <PlanTab
+          view={state.view}
           runs={state.runs}
-          kinds={kinds}
-          onEdit={setEditing}
-          onDelete={remove}
+          today={today}
+          schedule={schedule}
         />
-      </section>
-      <section className="card">
-        <h2>Check-ins</h2>
-        <details open={editingCheckIn ? true : undefined}>
-          <summary>
-            {editingCheckIn ? 'Edit check-in' : 'Add a check-in'}
-          </summary>
-          <CheckInForm
-            key={editingCheckIn?.id ?? 'new'}
-            today={today}
-            newId={newId}
-            editing={editingCheckIn}
-            onSave={saveCheckIn}
-            onCancel={() => setEditingCheckIn(undefined)}
-          />
-        </details>
-        <CheckInList
-          checkIns={state.checkIns}
-          onEdit={setEditingCheckIn}
-          onDelete={removeCheckIn}
-        />
-      </section>
-      <section className="card">
-        <h2>Backup</h2>
-        <BackupButton today={today} />
-        <RestoreButton
-          onRestored={() => {
-            setRestoreCount((count) => count + 1)
-            reload()
-          }}
-        />
-      </section>
+      )}
+      {tab === 'log' && (
+        <>
+          <section className="card">
+            <h2>Runs</h2>
+            <details open={editing ? true : undefined}>
+              <summary>{editing ? 'Edit run' : 'Log a run'}</summary>
+              <LogRunForm
+                key={editing?.id ?? 'new'}
+                today={today}
+                editing={editing}
+                newId={newId}
+                onSave={save}
+                onCancel={() => setEditing(undefined)}
+              />
+            </details>
+            <RunList
+              runs={state.runs}
+              kinds={kinds}
+              onEdit={setEditing}
+              onDelete={remove}
+            />
+          </section>
+          <section className="card">
+            <h2>Check-ins</h2>
+            <details open={editingCheckIn ? true : undefined}>
+              <summary>
+                {editingCheckIn ? 'Edit check-in' : 'Add a check-in'}
+              </summary>
+              <CheckInForm
+                key={editingCheckIn?.id ?? 'new'}
+                today={today}
+                newId={newId}
+                editing={editingCheckIn}
+                onSave={saveCheckIn}
+                onCancel={() => setEditingCheckIn(undefined)}
+              />
+            </details>
+            <CheckInList
+              checkIns={state.checkIns}
+              onEdit={setEditingCheckIn}
+              onDelete={removeCheckIn}
+            />
+          </section>
+        </>
+      )}
+      {tab === 'more' && (
+        <>
+          <section className="card">
+            <h2>Backup</h2>
+            <BackupButton today={today} />
+            <RestoreButton
+              onRestored={() => {
+                refresh()
+                reload()
+              }}
+            />
+          </section>
+          {account}
+        </>
+      )}
+      <TabBar current={tab} onChange={setTab} />
     </>
+  )
+}
+
+export const Dashboard = ({
+  today,
+  newId = defaultNewId,
+  account,
+}: {
+  today: IsoDate
+  newId?: () => string
+  account?: ReactNode
+}) => {
+  const { state, reload } = usePlan(today)
+
+  if (state.status === 'loading') return <p>Loading your plan…</p>
+  if (state.status === 'error') {
+    return <p role="alert">{`Couldn't load your plan: ${state.message}`}</p>
+  }
+  return (
+    <Tabs
+      state={state}
+      reload={reload}
+      today={today}
+      newId={newId}
+      account={account}
+    />
   )
 }
