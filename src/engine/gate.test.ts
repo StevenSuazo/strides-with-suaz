@@ -240,6 +240,25 @@ describe('gate: reasons and bad input', () => {
     )
   })
 
+  it('shows miles ran to the hundredth when they are not a whole tenth', () => {
+    const result = gate(week(1, 8.5, 8.56), flat(12), fresh)
+    expect(result.reason).toBe(
+      'Ran 8.56 of 8.5 miles with low pain, so next week goes up to 9.4 miles.',
+    )
+  })
+
+  it('keeps one decimal when the miles ran are a whole tenth', () => {
+    const result = gate(week(1, 10, 9), flat(12), fresh)
+    expect(result.reason).toContain('Ran 9.0 of 10.0 miles')
+  })
+
+  it('shows hundredths in the step-back and repeat reasons too', () => {
+    const repeat = gate(week(1, 10, 8.55), flat(12), fresh)
+    expect(repeat.reason).toContain('Ran 8.55 of 10.0 miles')
+    const back = gate(week(1, 10, 7.05), flat(12), fresh)
+    expect(back.reason).toContain('Ran 7.05 of 10.0 miles')
+  })
+
   it('throws a RangeError for negative or NaN miles', () => {
     expect(() => gate(week(1, 10, -1), flat(12), fresh)).toThrow(RangeError)
     expect(() => gate(week(1, 10, NaN), flat(12), fresh)).toThrow(RangeError)

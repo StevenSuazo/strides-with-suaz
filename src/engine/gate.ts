@@ -35,6 +35,13 @@ import { getWeekKind } from './weekStructure'
 
 const miles = (value: number): string => value.toFixed(1)
 
+// Miles actually run keep their hundredths (8.56, not 8.6) so the reason
+// matches the rest of the app; a whole tenth stays at one decimal (9.0).
+const ranMiles = (value: number): string =>
+  Math.abs(value * 10 - Math.round(value * 10)) < 1e-9
+    ? value.toFixed(1)
+    : value.toFixed(2)
+
 const assertMiles = (name: string, value: number): void => {
   if (!Number.isFinite(value) || value < 0) {
     throw new RangeError(
@@ -86,7 +93,7 @@ const evaluate = (
   // Rounded so exactly 90% (8.1 of 9) is not read as 0.8999999999999999.
   const ratio = Math.round((week.actualMiles / week.targetMiles) * 1e9) / 1e9
   const percent = Math.round(ratio * 100)
-  const ran = `Ran ${miles(week.actualMiles)} of ${miles(week.targetMiles)} miles`
+  const ran = `Ran ${ranMiles(week.actualMiles)} of ${miles(week.targetMiles)} miles`
   const lowest = week.targetMiles * config.painStepBackFactor
 
   if (pain > config.painThreshold) {
