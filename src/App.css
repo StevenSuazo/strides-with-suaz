@@ -448,12 +448,55 @@ button.today-item {
 }
 
 /* The Today page */
-.today-page .back {
-  margin-bottom: 12px;
+.today-hero {
+  margin-bottom: var(--space);
+  padding: var(--space);
+  color: #fff;
+  background: linear-gradient(135deg, #475569, #1e293b);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
-.today-page h3 {
-  margin-top: 20px;
+.today-hero.hero-long {
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+}
+
+.today-hero.hero-easy {
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+}
+
+.today-hero.hero-extra {
+  background: linear-gradient(135deg, #6b7280, #374151);
+}
+
+.today-hero h2 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 1.6rem;
+}
+
+.today-hero .muted {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.today-hero .today-miles {
+  margin-bottom: 8px;
+}
+
+.today-hero .chip {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.today-hero .back {
+  margin-bottom: 12px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.today-page h3:first-child {
+  margin-top: 0;
 }
 
 .today-page ul {

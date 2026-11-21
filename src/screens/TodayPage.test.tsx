@@ -76,3 +76,50 @@ describe('TodayPage', () => {
     expect(onBack).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('TodayPage: header colour', () => {
+  const heroOf = (info: TodayInfo) => {
+    const { container } = show(info)
+    return container.querySelector('.today-hero')
+  }
+
+  it('is purple for a long run', () => {
+    const hero = heroOf({ kind: 'long', title: 'Long run', miles: 4.7 })
+    expect(hero).toHaveClass('hero-long')
+  })
+
+  it('is blue for an easy run', () => {
+    const hero = heroOf({ kind: 'easy', title: 'Easy run', miles: 2.3 })
+    expect(hero).toHaveClass('hero-easy')
+  })
+
+  it('is neutral for a rest day and an extra run', () => {
+    expect(heroOf({ kind: 'rest', title: 'Rest day' })).toHaveClass('hero-rest')
+    expect(heroOf({ kind: 'extra', title: 'Extra run', miles: 3 })).toHaveClass(
+      'hero-extra',
+    )
+  })
+
+  it('holds the title, miles and Back button in the coloured header', () => {
+    const { container } = show({
+      kind: 'long',
+      title: 'Long run',
+      miles: 4.7,
+      status: 'todo',
+    })
+    const hero = container.querySelector('.today-hero') as HTMLElement
+    expect(hero).toContainElement(
+      screen.getByRole('heading', { name: 'Long run' }),
+    )
+    expect(hero).toContainElement(screen.getByText('4.7 miles'))
+    expect(hero).toContainElement(
+      screen.getByRole('button', { name: 'Back to Home' }),
+    )
+  })
+
+  it('keeps the advice below the header, not inside it', () => {
+    const { container } = show({ kind: 'easy', title: 'Easy run', miles: 2.3 })
+    const hero = container.querySelector('.today-hero') as HTMLElement
+    expect(hero).not.toContainElement(screen.getByText(/conversational/))
+  })
+})
