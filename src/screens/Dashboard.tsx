@@ -4,6 +4,8 @@
  * Loads the plan once with usePlan and shares it with the pieces below: runs
  * and check-ins, each with a form and a list. After any save or delete it reloads, so the week's numbers (and next week's
  * target) follow your runs. Editing a run swaps the form into edit mode.
+ * After a restore, the week schedule is reloaded from scratch too, since a
+ * backup can bring back availability and hand matches.
  * newId makes ids for new runs and can be replaced in tests.
  */
 import { useState } from 'react'
@@ -17,6 +19,7 @@ import { CheckInForm } from './CheckInForm'
 import { CheckInList } from './CheckInList'
 import { LogRunForm } from './LogRunForm'
 import { ProgressChart } from './ProgressChart'
+import { RestoreButton } from './RestoreButton'
 import { RunList } from './RunList'
 import { WeekSchedule } from './WeekSchedule'
 import { ThisWeek } from './ThisWeek'
@@ -33,6 +36,7 @@ export const Dashboard = ({
   const storage = useStorage()
   const { state, reload } = usePlan(today)
   const [editing, setEditing] = useState<Run | undefined>()
+  const [restoreCount, setRestoreCount] = useState(0)
   const [matchedKinds, setMatchedKinds] = useState<Record<string, RunKind>>({})
 
   if (state.status === 'loading') return <p>Loading your plan…</p>
@@ -69,6 +73,7 @@ export const Dashboard = ({
   return (
     <>
       <WeekSchedule
+        key={restoreCount}
         view={state.view}
         runs={state.runs}
         today={today}
@@ -111,6 +116,12 @@ export const Dashboard = ({
       <section className="card">
         <h2>Backup</h2>
         <BackupButton today={today} />
+        <RestoreButton
+          onRestored={() => {
+            setRestoreCount((count) => count + 1)
+            reload()
+          }}
+        />
       </section>
     </>
   )
