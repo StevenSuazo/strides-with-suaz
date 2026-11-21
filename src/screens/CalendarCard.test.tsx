@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import type { Run } from '../engine/types'
 import { computePlan } from '../plan/progress'
 import { StorageProvider } from '../storage/StorageProvider'
 import { emptyStorage } from '../test/fixtures'
@@ -17,6 +18,7 @@ const view = computePlan({
 
 const show = (
   current = undefined as Parameters<typeof CalendarCard>[0]['current'],
+  onOpenRun?: (run: Run) => void,
 ) =>
   render(
     <StorageProvider storage={emptyStorage()}>
@@ -25,6 +27,7 @@ const show = (
         runs={weekOneRuns}
         today={TODAY}
         current={current}
+        onOpenRun={onOpenRun}
       />
     </StorageProvider>,
   )
@@ -75,5 +78,19 @@ describe('CalendarCard', () => {
       </StorageProvider>,
     )
     expect(container).toBeEmptyDOMElement()
+  })
+})
+
+describe('CalendarCard: opening a run', () => {
+  it('opens a run from a day in an opened past week', async () => {
+    const opened: Run[] = []
+    show(undefined, (run) => opened.push(run))
+    await userEvent.click(screen.getByRole('button', { name: /Week 1/ }))
+    const days = await screen.findAllByRole('button', {
+      name: /Run details for/,
+    })
+    expect(days.length).toBeGreaterThan(0)
+    await userEvent.click(days[0])
+    expect(weekOneRuns.map((run) => run.id)).toContain(opened[0].id)
   })
 })

@@ -154,6 +154,7 @@ const Tabs = ({
           runs={state.runs}
           today={today}
           schedule={schedule}
+          onOpenRun={openRun}
         />
       )}
       {!runPageOpen && tab === 'log' && (

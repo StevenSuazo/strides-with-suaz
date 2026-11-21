@@ -9,7 +9,8 @@
  *   the planned runs from the target the week had, and matches them to your
  *   runs the same way the current week is matched. Weeks with nothing saved
  *   count as all days open.
- * Nothing here changes anything: it is a look back.
+ * With onOpenRun, a day with a run in any of the strips is tappable and opens
+ * that run's page. Nothing here changes anything: it is a look back.
  */
 import { useEffect, useState } from 'react'
 import { placeRuns, weekStartDate } from '../engine'
@@ -47,11 +48,13 @@ const PastWeekBody = ({
   target,
   runs,
   today,
+  onOpenRun,
 }: {
   weekIndex: number
   target: WeekTarget
   runs: Run[]
   today: IsoDate
+  onOpenRun?: (run: Run) => void
 }) => {
   const storage = useStorage()
   const [loaded, setLoaded] = useState<Loaded>()
@@ -91,6 +94,7 @@ const PastWeekBody = ({
       extraRuns={extraRuns}
       today={today}
       stripLabel={`Week ${weekIndex}`}
+      onOpenRun={onOpenRun}
     />
   )
 }
@@ -100,11 +104,13 @@ const PastWeek = ({
   view,
   runs,
   today,
+  onOpenRun,
 }: {
   week: SettledWeek
   view: PlanView
   runs: Run[]
   today: IsoDate
+  onOpenRun?: (run: Run) => void
 }) => {
   const [open, setOpen] = useState(false)
   const { weekIndex, targetMiles, actualMiles } = week.result
@@ -139,6 +145,7 @@ const PastWeek = ({
           target={target}
           runs={runs}
           today={today}
+          onOpenRun={onOpenRun}
         />
       )}
     </li>
@@ -150,11 +157,13 @@ export const CalendarCard = ({
   runs,
   today,
   current,
+  onOpenRun,
 }: {
   view: PlanView
   runs: Run[]
   today: IsoDate
   current?: CurrentWeek
+  onOpenRun?: (run: Run) => void
 }) => {
   const past = [...view.weeks].reverse()
   if (!current && past.length === 0) return null
@@ -175,6 +184,7 @@ export const CalendarCard = ({
             extraRuns={current.extraRuns}
             today={today}
             stripLabel={`Week ${current.weekIndex}, this week`}
+            onOpenRun={onOpenRun}
           />
         </div>
       )}
@@ -187,6 +197,7 @@ export const CalendarCard = ({
               view={view}
               runs={runs}
               today={today}
+              onOpenRun={onOpenRun}
             />
           ))}
         </ul>

@@ -1076,4 +1076,26 @@ describe('Dashboard: the run page', () => {
     expect(screen.getByText('2.4 miles')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit run' })).toBeInTheDocument()
   })
+
+  it('opens a run from a day in the Plan tab calendar', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    show(storage)
+    await openTab('Plan')
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Run details for Mon, Nov 16',
+      }),
+    )
+    expect(screen.getByText('2.5 miles')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(
+      screen.getByRole('heading', { name: 'Calendar' }),
+    ).toBeInTheDocument()
+  })
 })
