@@ -5,7 +5,8 @@
  * the planned run and its miles. The dot is blue for an easy run and purple
  * for a long run. A done day turns green with a check and the miles you ran;
  * a missed day turns red. A run on a day with nothing planned shows a grey
- * dot. Each column also has a plain-words label for screen readers. With
+ * dot. Each column also has a plain-words label for screen readers. The
+ * whole strip is labelled "This week" unless you pass another label. With
  * onOpenRun, a day that has a run (done, or an extra one) is tappable and
  * hands that run over, so the app can open its page.
  */
@@ -28,15 +29,17 @@ export const WeekStrip = ({
   rows,
   extraRuns,
   today,
+  stripLabel = 'This week',
   onOpenRun,
 }: {
   weekStart: IsoDate
   rows: PlannedRow[]
   extraRuns: Run[]
   today: IsoDate
+  stripLabel?: string
   onOpenRun?: (run: Run) => void
 }) => (
-  <div className="week-strip" role="group" aria-label="This week">
+  <div className="week-strip" role="group" aria-label={stripLabel}>
     {DAY_NAMES.map((dayName, dayIndex) => {
       const date = dateOfDay(weekStart, dayIndex)
       const name = formatDate(date)
