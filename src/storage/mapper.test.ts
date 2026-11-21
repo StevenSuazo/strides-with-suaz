@@ -137,6 +137,11 @@ describe('runs', () => {
       date: '2026-11-15',
       miles: 4.01,
       source: 'strava',
+      duration_seconds: null,
+      avg_heart_rate: null,
+      max_heart_rate: null,
+      cadence: null,
+      effort: null,
     })
   })
 
