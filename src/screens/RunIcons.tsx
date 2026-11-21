@@ -26,7 +26,7 @@ const Icon = ({
   </svg>
 )
 
-export const RunnerIcon = ({ size = 56 }: { size?: number }) => (
+export const RunnerIcon = ({ size = 96 }: { size?: number }) => (
   <Icon
     label="Running"
     size={size}
@@ -34,7 +34,7 @@ export const RunnerIcon = ({ size = 56 }: { size?: number }) => (
   />
 )
 
-export const ThumbsUpIcon = ({ size = 40 }: { size?: number }) => (
+export const ThumbsUpIcon = ({ size = 64 }: { size?: number }) => (
   <Icon
     label="Thumbs up"
     size={size}
