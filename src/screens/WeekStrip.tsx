@@ -5,7 +5,9 @@
  * the planned run and its miles. The dot is blue for an easy run and purple
  * for a long run. A done day turns green with a check and the miles you ran;
  * a missed day turns red. A run on a day with nothing planned shows a grey
- * dot. Each column also has a plain-words label for screen readers.
+ * dot. Each column also has a plain-words label for screen readers. With
+ * onOpenRun, a day that has a run (done, or an extra one) is tappable and
+ * hands that run over, so the app can open its page.
  */
 import type { IsoDate, Run } from '../engine/types'
 import { dateOfDay, type PlannedRow } from '../plan/weekMatch'
@@ -26,11 +28,13 @@ export const WeekStrip = ({
   rows,
   extraRuns,
   today,
+  onOpenRun,
 }: {
   weekStart: IsoDate
   rows: PlannedRow[]
   extraRuns: Run[]
   today: IsoDate
+  onOpenRun?: (run: Run) => void
 }) => (
   <div className="week-strip" role="group" aria-label="This week">
     {DAY_NAMES.map((dayName, dayIndex) => {
@@ -69,14 +73,8 @@ export const WeekStrip = ({
         .filter(Boolean)
         .join(' ')
 
-      return (
-        <div
-          key={date}
-          className={classes}
-          role="group"
-          aria-label={label}
-          aria-current={date === today ? 'date' : undefined}
-        >
+      const content = (
+        <>
           <span className="day-name">{dayName.toUpperCase()}</span>
           <span className="day-date">{Number(date.slice(8))}</span>
           {dot ? (
@@ -85,6 +83,31 @@ export const WeekStrip = ({
             <span className="dot-space" />
           )}
           <span className="day-miles">{miles}</span>
+        </>
+      )
+      const openable =
+        onOpenRun && (row?.run ?? (extra.length > 0 ? extra[0] : undefined))
+
+      return (
+        <div
+          key={date}
+          className={classes}
+          role="group"
+          aria-label={label}
+          aria-current={date === today ? 'date' : undefined}
+        >
+          {openable ? (
+            <button
+              type="button"
+              className="day-hit"
+              aria-label={`Run details for ${name}`}
+              onClick={() => onOpenRun?.(openable)}
+            >
+              {content}
+            </button>
+          ) : (
+            content
+          )}
         </div>
       )
     })}
