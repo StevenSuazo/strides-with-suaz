@@ -1056,4 +1056,24 @@ describe('Dashboard: the run page', () => {
       screen.getByRole('heading', { name: 'Planned runs' }),
     ).toBeInTheDocument()
   })
+
+  it("opens today's run from the Today card once it is logged", async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-18',
+      miles: 2.4,
+      source: 'in_app',
+    })
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard today="2026-11-18" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    fireEvent.click(
+      await screen.findByRole('button', { name: "Open today's run" }),
+    )
+    expect(screen.getByText('2.4 miles')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit run' })).toBeInTheDocument()
+  })
 })

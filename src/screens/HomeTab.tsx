@@ -3,7 +3,7 @@
  *
  * The strip and today's card appear once the week's plan has loaded; tapping
  * today's card calls onOpenToday, and tapping a day with a run in the strip
- * calls onOpenRun. If the plan could not load, the reason is
+ * calls onOpenRun (as does today's card once today's run is logged). If the plan could not load, the reason is
  * shown. The week summary always shows.
  */
 import type { IsoDate, Run } from '../engine/types'
@@ -42,6 +42,7 @@ export const HomeTab = ({
           extraRuns={schedule.extraRuns}
           today={today}
           onOpen={onOpenToday}
+          onOpenRun={onOpenRun}
         />
       </>
     )}
