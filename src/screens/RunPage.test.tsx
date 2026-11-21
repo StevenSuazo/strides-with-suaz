@@ -122,6 +122,14 @@ describe('RunPage: the header side', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('centres the running figure in the header, and not the pace side', () => {
+    const { container, unmount } = show(base, 'easy')
+    expect(container.querySelector('.run-side-centered')).not.toBeNull()
+    unmount()
+    const detailed = show({ ...base, durationSeconds: 2310 }, 'easy')
+    expect(detailed.container.querySelector('.run-side-centered')).toBeNull()
+  })
+
   it('shows pace, time and a thumbs up when the run has details', () => {
     show({ ...base, durationSeconds: 2310 }, 'easy')
     expect(screen.getByText('9:38 /mi')).toBeInTheDocument()

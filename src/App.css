@@ -591,6 +591,15 @@ button.link {
   text-align: right;
 }
 
+.run-side-centered {
+  position: absolute;
+  top: 50%;
+  right: var(--space);
+  float: none;
+  margin: 0;
+  transform: translateY(-50%);
+}
+
 .run-side p {
   margin: 0 0 2px;
 }

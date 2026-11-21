@@ -71,7 +71,7 @@ export const RunPage = ({
         >
           ‹ Back
         </button>
-        <div className="run-side">
+        <div className={`run-side${hasAnyDetail ? '' : ' run-side-centered'}`}>
           {hasAnyDetail ? (
             <>
               {pace && <p className="run-pace">{`${pace} /mi`}</p>}
