@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -6,7 +7,7 @@ import {
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { buildBackup } from '../backup/backup'
 import { StorageProvider } from '../storage/StorageProvider'
 import type { AppStorage } from '../storage/types'
@@ -773,11 +774,64 @@ describe('Dashboard: today card', () => {
     expect(screen.getByText('Easy run')).toBeInTheDocument()
   })
 
-  it('opens the details for today on tap', async () => {
-    await showOn('2026-11-20')
-    fireEvent.click(await screen.findByRole('button', { name: 'Show details' }))
-    expect(screen.getByText(/longest run of your week/)).toBeInTheDocument()
-    expect(screen.getByText(/Bring water/)).toBeInTheDocument()
+  describe('the Today page', () => {
+    const open = async (today = '2026-11-20') => {
+      await showOn(today)
+      fireEvent.click(
+        await screen.findByRole('button', { name: "Open today's workout" }),
+      )
+    }
+
+    afterEach(() => {
+      window.history.replaceState(null, '')
+    })
+
+    it('opens on tap, in place of Home, with advice for the run', async () => {
+      await open()
+      expect(
+        screen.getByRole('heading', { name: 'Long run' }),
+      ).toBeInTheDocument()
+      expect(screen.getByText(/Bring water/)).toBeInTheDocument()
+      expect(screen.queryByText('Week 2 of 19')).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('group', { name: 'This week' }),
+      ).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Home' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      )
+    })
+
+    it('goes back to Home from the Back button', async () => {
+      await open()
+      fireEvent.click(screen.getByRole('button', { name: 'Back to Home' }))
+      expect(await screen.findByText('Week 2 of 19')).toBeInTheDocument()
+      expect(screen.queryByText(/Bring water/)).not.toBeInTheDocument()
+    })
+
+    it("goes back to Home from the browser's Back", async () => {
+      await open()
+      act(() => window.history.back())
+      expect(await screen.findByText('Week 2 of 19')).toBeInTheDocument()
+    })
+
+    it('closes when you switch to another tab', async () => {
+      await open()
+      goTo('Plan')
+      expect(
+        await screen.findByRole('heading', { name: 'Your plan' }),
+      ).toBeInTheDocument()
+      goTo('Home')
+      expect(await screen.findByText('Week 2 of 19')).toBeInTheDocument()
+      expect(screen.queryByText(/Bring water/)).not.toBeInTheDocument()
+    })
+
+    it('opens for a rest day too', async () => {
+      await open('2026-11-17')
+      expect(
+        screen.getByRole('heading', { name: 'Rest day' }),
+      ).toBeInTheDocument()
+    })
   })
 
   it('shows a rest day', async () => {

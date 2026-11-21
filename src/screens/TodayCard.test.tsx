@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { PlannedRun, Run } from '../engine/types'
 import { matchWeek } from '../plan/weekMatch'
 import { TodayCard } from './TodayCard'
@@ -17,7 +17,12 @@ const run = (id: string, date: string, miles: number): Run => ({
   source: 'in_app',
 })
 
-const show = (today: string, runs: Run[] = [], plan = planned) => {
+const show = (
+  today: string,
+  runs: Run[] = [],
+  plan = planned,
+  onOpen: () => void = () => {},
+) => {
   const { rows, extraRuns } = matchWeek({
     weekIndex: 2,
     weekStart: '2026-11-16',
@@ -32,6 +37,7 @@ const show = (today: string, runs: Run[] = [], plan = planned) => {
       rows={rows}
       extraRuns={extraRuns}
       today={today}
+      onOpen={onOpen}
     />,
   )
 }
@@ -135,68 +141,35 @@ describe('TodayCard: outside the week', () => {
   })
 })
 
-describe('TodayCard: details', () => {
-  const toggle = () => screen.getByRole('button', { name: /details/i })
+describe('TodayCard: opening the Today page', () => {
+  it('is one button that calls onOpen when tapped', async () => {
+    const onOpen = vi.fn()
+    show('2026-11-18', [], planned, onOpen)
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's workout" }))
+    expect(onOpen).toHaveBeenCalledTimes(1)
+  })
 
-  it('starts collapsed, with a Show details button', () => {
+  it('can be opened on a rest day and after an extra run too', async () => {
+    const onOpen = vi.fn()
+    const { unmount } = show('2026-11-17', [], planned, onOpen)
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's workout" }))
+    unmount()
+    show('2026-11-17', [run('x', '2026-11-17', 3)], planned, onOpen)
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's workout" }))
+    expect(onOpen).toHaveBeenCalledTimes(2)
+  })
+
+  it('no longer shows the advice on the card itself', () => {
     show('2026-11-18')
-    expect(toggle()).toHaveTextContent('Show details')
-    expect(toggle()).toHaveAttribute('aria-expanded', 'false')
     expect(screen.queryByText(/conversational/)).not.toBeInTheDocument()
-  })
-
-  it('opens to the easy-run advice, and closes again', async () => {
-    const user = userEvent.setup()
-    show('2026-11-18')
-    await user.click(toggle())
-    expect(toggle()).toHaveTextContent('Hide details')
-    expect(toggle()).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText(/A relaxed run/)).toBeInTheDocument()
-    expect(screen.getByText(/conversational/)).toBeInTheDocument()
-    expect(screen.getByText(/not medical advice/i)).toBeInTheDocument()
-    await user.click(toggle())
-    expect(screen.queryByText(/conversational/)).not.toBeInTheDocument()
-    expect(toggle()).toHaveAttribute('aria-expanded', 'false')
-  })
-
-  it('opens to the long-run advice on a long run day', async () => {
-    const user = userEvent.setup()
-    show('2026-11-20')
-    await user.click(toggle())
-    expect(screen.getByText(/longest run of your week/)).toBeInTheDocument()
-    expect(screen.getByText(/Bring water/)).toBeInTheDocument()
-    expect(screen.queryByText(/conversational/)).not.toBeInTheDocument()
-  })
-
-  it('shows rest-day advice on a rest day', async () => {
-    const user = userEvent.setup()
-    show('2026-11-17')
-    await user.click(toggle())
-    expect(screen.getByText(/No run planned today/)).toBeInTheDocument()
-  })
-
-  it('shows extra-run advice after an unplanned run', async () => {
-    const user = userEvent.setup()
-    show('2026-11-17', [run('x', '2026-11-17', 3)])
-    await user.click(toggle())
-    expect(screen.getByText(/without a run planned/)).toBeInTheDocument()
-  })
-
-  it('still opens once the run is done', async () => {
-    const user = userEvent.setup()
-    show('2026-11-18', [run('a', '2026-11-18', 2.4)])
-    await user.click(toggle())
-    expect(screen.getByText(/conversational/)).toBeInTheDocument()
-  })
-
-  it('links the button to the panel it opens', async () => {
-    const user = userEvent.setup()
-    show('2026-11-18')
-    await user.click(toggle())
-    const id = toggle().getAttribute('aria-controls')
-    expect(id).toBeTruthy()
-    expect(document.getElementById(id as string)).toHaveTextContent(
-      /A relaxed run/,
-    )
+    expect(
+      screen.queryByRole('button', { name: /show details/i }),
+    ).not.toBeInTheDocument()
   })
 })

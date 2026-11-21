@@ -1,7 +1,9 @@
 /**
  * Dashboard.tsx: the main page, in four tabs.
  *
- * - Home: the week strip, today's workout and this week.
+ * - Home: the week strip, today's workout and this week. Tapping today's
+ *   workout opens the Today page in place of Home (the tab bar stays; the
+ *   Back button, the phone's Back gesture or any tab closes it).
  * - Plan: the progress chart and this week's planned runs.
  * - Log: your runs and check-ins, each with a form and a list.
  * - More: backup and restore, plus whatever you pass as `account` (the
@@ -16,6 +18,7 @@
 import { useState, type ReactNode } from 'react'
 import type { CheckIn, IsoDate, Run } from '../engine/types'
 import { runKinds } from '../plan/runKinds'
+import { todayInfo } from '../plan/todayInfo'
 import { PLAN } from '../plan/settings'
 import { usePlan, type PlanState } from '../plan/usePlan'
 import { useStorage } from '../storage/useStorage'
@@ -28,6 +31,8 @@ import { PlanTab } from './PlanTab'
 import { RestoreButton } from './RestoreButton'
 import { RunList } from './RunList'
 import { TabBar, type TabId } from './TabBar'
+import { TodayPage } from './TodayPage'
+import { useHistoryPage } from './useHistoryPage'
 import { useWeekSchedule } from './useWeekSchedule'
 
 const defaultNewId = (): string => `app-${crypto.randomUUID()}`
@@ -49,6 +54,7 @@ const Tabs = ({
 }) => {
   const storage = useStorage()
   const [tab, setTab] = useState<TabId>('home')
+  const todayPage = useHistoryPage()
   const [editing, setEditing] = useState<Run | undefined>()
   const [editingCheckIn, setEditingCheckIn] = useState<CheckIn | undefined>()
   const {
@@ -56,6 +62,11 @@ const Tabs = ({
     kinds: matchedKinds,
     refresh,
   } = useWeekSchedule(state.view, state.runs, today)
+
+  const todayDetail =
+    schedule.status === 'ready'
+      ? todayInfo(schedule.weekStart, schedule.rows, schedule.extraRuns, today)
+      : undefined
 
   // Runs matched to this week's plan take the planned type; the rest use the
   // longest-run-of-the-week rule.
@@ -87,9 +98,17 @@ const Tabs = ({
 
   return (
     <>
-      {tab === 'home' && (
-        <HomeTab view={state.view} today={today} schedule={schedule} />
-      )}
+      {tab === 'home' &&
+        (todayPage.open && todayDetail ? (
+          <TodayPage info={todayDetail} today={today} onBack={todayPage.hide} />
+        ) : (
+          <HomeTab
+            view={state.view}
+            today={today}
+            schedule={schedule}
+            onOpenToday={todayPage.show}
+          />
+        ))}
       {tab === 'plan' && (
         <PlanTab
           view={state.view}
@@ -158,7 +177,13 @@ const Tabs = ({
           {account}
         </>
       )}
-      <TabBar current={tab} onChange={setTab} />
+      <TabBar
+        current={tab}
+        onChange={(next) => {
+          if (todayPage.open) todayPage.hide()
+          setTab(next)
+        }}
+      />
     </>
   )
 }
