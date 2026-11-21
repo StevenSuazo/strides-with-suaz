@@ -36,6 +36,7 @@ export const Dashboard = ({
   const storage = useStorage()
   const { state, reload } = usePlan(today)
   const [editing, setEditing] = useState<Run | undefined>()
+  const [editingCheckIn, setEditingCheckIn] = useState<CheckIn | undefined>()
   const [restoreCount, setRestoreCount] = useState(0)
   const [matchedKinds, setMatchedKinds] = useState<Record<string, RunKind>>({})
 
@@ -62,11 +63,13 @@ export const Dashboard = ({
 
   const saveCheckIn = async (checkIn: CheckIn) => {
     await storage.saveCheckIn(checkIn)
+    setEditingCheckIn(undefined)
     reload()
   }
 
   const removeCheckIn = async (id: string) => {
     await storage.deleteCheckIn(id)
+    if (editingCheckIn?.id === id) setEditingCheckIn(undefined)
     reload()
   }
 
@@ -107,11 +110,24 @@ export const Dashboard = ({
       </section>
       <section className="card">
         <h2>Check-ins</h2>
-        <details>
-          <summary>Add a check-in</summary>
-          <CheckInForm today={today} newId={newId} onSave={saveCheckIn} />
+        <details open={editingCheckIn ? true : undefined}>
+          <summary>
+            {editingCheckIn ? 'Edit check-in' : 'Add a check-in'}
+          </summary>
+          <CheckInForm
+            key={editingCheckIn?.id ?? 'new'}
+            today={today}
+            newId={newId}
+            editing={editingCheckIn}
+            onSave={saveCheckIn}
+            onCancel={() => setEditingCheckIn(undefined)}
+          />
         </details>
-        <CheckInList checkIns={state.checkIns} onDelete={removeCheckIn} />
+        <CheckInList
+          checkIns={state.checkIns}
+          onEdit={setEditingCheckIn}
+          onDelete={removeCheckIn}
+        />
       </section>
       <section className="card">
         <h2>Backup</h2>

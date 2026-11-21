@@ -216,7 +216,10 @@ describe('Dashboard: check-ins', () => {
     const user = show(storage)
     await screen.findByText('Week 2 of 19')
     await user.click(
-      screen.getByRole('button', { name: 'Delete Sun, Nov 15 check-in' }),
+      screen.getByRole('button', { name: 'Actions for Sun, Nov 15 check-in' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Delete Sun, Nov 15 check-in' }),
     )
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     expect(await screen.findByText('No check-ins yet.')).toBeInTheDocument()
@@ -224,6 +227,66 @@ describe('Dashboard: check-ins', () => {
     await waitFor(() =>
       expect(screen.getByText('Target: 9.3 miles')).toBeInTheDocument(),
     )
+  })
+})
+
+describe('Dashboard: editing a check-in', () => {
+  const saved = async () => {
+    const storage = await seededStorage()
+    await storage.saveCheckIn({
+      id: 'c1',
+      date: '2026-11-15',
+      feel: 'good',
+      kind: 'afterRun',
+      entries: [],
+      note: 'easy',
+    })
+    return storage
+  }
+
+  it('opens the form filled in, and saves over the same check-in', async () => {
+    const storage = await saved()
+    const user = show(storage)
+    await screen.findByText(
+      'Sun, Nov 15: after a run, felt good, no pain. Note: easy',
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Actions for Sun, Nov 15 check-in' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit Sun, Nov 15 check-in' }),
+    )
+    expect(screen.getByText('Edit check-in')).toBeInTheDocument()
+    expect((screen.getByLabelText('Note') as HTMLTextAreaElement).value).toBe(
+      'easy',
+    )
+    await user.selectOptions(screen.getByLabelText('Feel'), 'rough')
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(
+      await screen.findByText(
+        'Sun, Nov 15: after a run, felt rough, no pain. Note: easy',
+      ),
+    ).toBeInTheDocument()
+    const all = await storage.getCheckIns()
+    expect(all).toHaveLength(1)
+    expect(all[0].id).toBe('c1')
+    expect(screen.getByText('Add a check-in')).toBeInTheDocument()
+  })
+
+  it('goes back to adding when you cancel', async () => {
+    const user = show(await saved())
+    await screen.findByText(/Sun, Nov 15: after a run/)
+    await user.click(
+      screen.getByRole('button', { name: 'Actions for Sun, Nov 15 check-in' }),
+    )
+    await user.click(
+      screen.getByRole('menuitem', { name: 'Edit Sun, Nov 15 check-in' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByText('Add a check-in')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Save check-in' }),
+    ).toBeInTheDocument()
   })
 })
 

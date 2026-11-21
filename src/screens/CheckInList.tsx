@@ -2,13 +2,16 @@
  * CheckInList.tsx: your most recent check-ins, with Delete.
  *
  * Ten newest first. Each line reads like "Sun, Nov 15: after a run, felt good,
- * knee (left) 2/10. Note: ...". Delete asks to confirm (Confirm delete or Keep
- * check-in) before calling onDelete, and shows the reason if that fails.
+ * knee (left) 2/10. Note: ...". A three-dots menu (RowMenu) offers Edit, which
+ * hands the check-in to onEdit, and Delete, which asks to confirm (Confirm
+ * delete or Keep check-in) before calling onDelete and shows the reason if
+ * that fails.
  */
 import { useState } from 'react'
 import type { CheckIn, CheckInEntry } from '../engine/types'
 import { AREA_LABELS, FEEL_LABELS, KIND_LABELS } from './checkInLabels'
 import { formatDate } from './format'
+import { RowMenu } from './RowMenu'
 
 const SHOWN = 10
 
@@ -37,9 +40,11 @@ const describe = (checkIn: CheckIn): string => {
 
 export const CheckInList = ({
   checkIns,
+  onEdit,
   onDelete,
 }: {
   checkIns: CheckIn[]
+  onEdit: (checkIn: CheckIn) => void
   onDelete: (id: string) => Promise<void>
 }) => {
   const [confirming, setConfirming] = useState<string | undefined>()
@@ -83,16 +88,16 @@ export const CheckInList = ({
                   </button>
                 </>
               ) : (
-                <button
-                  type="button"
-                  aria-label={`Delete ${formatDate(checkIn.date)} check-in`}
-                  onClick={() => {
+                <RowMenu
+                  label={`Actions for ${formatDate(checkIn.date)} check-in`}
+                  editLabel={`Edit ${formatDate(checkIn.date)} check-in`}
+                  deleteLabel={`Delete ${formatDate(checkIn.date)} check-in`}
+                  onEdit={() => onEdit(checkIn)}
+                  onDelete={() => {
                     setError(undefined)
                     setConfirming(checkIn.id)
                   }}
-                >
-                  Delete
-                </button>
+                />
               )}
             </li>
           ))}

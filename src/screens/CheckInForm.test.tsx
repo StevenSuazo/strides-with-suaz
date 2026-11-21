@@ -191,3 +191,115 @@ describe('CheckInForm: bad input and errors', () => {
     )
   })
 })
+
+describe('CheckInForm: editing', () => {
+  const existing: CheckIn = {
+    id: 'c9',
+    date: '2026-11-15',
+    kind: 'nextMorning',
+    feel: 'rough',
+    entries: [
+      { area: 'knee', side: 'left', pain: 3 },
+      { area: 'other', side: 'na', pain: 1, otherLabel: 'hip flexor' },
+    ],
+    note: 'tight',
+    workoutId: 'w1-6',
+    activityId: 'act-1',
+  }
+
+  const edit = (onSave: (c: CheckIn) => Promise<void> = async () => {}) => {
+    const saved: CheckIn[] = []
+    let cancelled = 0
+    render(
+      <CheckInForm
+        today="2026-11-18"
+        newId={() => 'new-1'}
+        editing={existing}
+        onSave={async (checkIn) => {
+          await onSave(checkIn)
+          saved.push(checkIn)
+        }}
+        onCancel={() => cancelled++}
+      />,
+    )
+    return { saved, cancelled: () => cancelled, user: userEvent.setup() }
+  }
+
+  it('fills in the check-in being edited', () => {
+    edit()
+    expect(date().value).toBe('2026-11-15')
+    expect((screen.getByLabelText('When') as HTMLSelectElement).value).toBe(
+      'nextMorning',
+    )
+    expect((screen.getByLabelText('Feel') as HTMLSelectElement).value).toBe(
+      'rough',
+    )
+    expect((screen.getByLabelText('Area 1') as HTMLSelectElement).value).toBe(
+      'knee',
+    )
+    expect((screen.getByLabelText('Side 1') as HTMLSelectElement).value).toBe(
+      'left',
+    )
+    expect((screen.getByLabelText('Pain 1') as HTMLSelectElement).value).toBe(
+      '3',
+    )
+    expect(
+      (screen.getByLabelText('Describe spot 2') as HTMLInputElement).value,
+    ).toBe('hip flexor')
+    expect((screen.getByLabelText('Note') as HTMLTextAreaElement).value).toBe(
+      'tight',
+    )
+  })
+
+  it('saves over the same id and keeps its links to a run', async () => {
+    const { saved, user } = edit()
+    fireEvent.change(screen.getByLabelText('Feel'), {
+      target: { value: 'okay' },
+    })
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(saved).toEqual([
+      {
+        id: 'c9',
+        date: '2026-11-15',
+        kind: 'nextMorning',
+        feel: 'okay',
+        entries: existing.entries,
+        note: 'tight',
+        workoutId: 'w1-6',
+        activityId: 'act-1',
+      },
+    ])
+  })
+
+  it('drops the note when you clear it', async () => {
+    const { saved, user } = edit()
+    await user.clear(screen.getByLabelText('Note'))
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(saved[0]).not.toHaveProperty('note')
+  })
+
+  it('keeps what you typed and does not claim a save after saving', async () => {
+    const { user } = edit()
+    await user.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(screen.queryByText('Check-in saved.')).not.toBeInTheDocument()
+    expect((screen.getByLabelText('Note') as HTMLTextAreaElement).value).toBe(
+      'tight',
+    )
+  })
+
+  it('has Cancel, and no plain Save check-in button', async () => {
+    const { user, cancelled } = edit()
+    expect(
+      screen.queryByRole('button', { name: 'Save check-in' }),
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(cancelled()).toBe(1)
+  })
+
+  it('has no Cancel button when adding', () => {
+    setup()
+    expect(
+      screen.queryByRole('button', { name: 'Cancel' }),
+    ).not.toBeInTheDocument()
+  })
+})

@@ -3,15 +3,15 @@
  *
  * Shows the ten newest runs, newest first, each with a coloured dot and word
  * for its type (easy or long, from kinds; nothing if the type is unknown).
- * The three-dots button opens a small menu with Edit and Delete. Only one menu
- * is open at a time; it closes on Escape, on a click elsewhere, and after you
- * choose. Edit hands the run to onEdit. Delete asks to confirm first (Confirm
+ * The three-dots button (RowMenu) opens a small menu with Edit and Delete.
+ * Edit hands the run to onEdit. Delete asks to confirm first (Confirm
  * delete or Keep run), then calls onDelete; if that fails the reason is shown.
  * It does no storage itself.
  */
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Run, RunKind } from '../engine/types'
 import { formatDate, formatMiles } from './format'
+import { RowMenu } from './RowMenu'
 
 const SHOWN = 10
 
@@ -31,24 +31,6 @@ export const RunList = ({
 }) => {
   const [confirming, setConfirming] = useState<string | undefined>()
   const [error, setError] = useState<string | undefined>()
-  const [menuFor, setMenuFor] = useState<string | undefined>()
-
-  useEffect(() => {
-    if (menuFor === undefined) return
-    const close = () => setMenuFor(undefined)
-    const onMouseDown = (event: MouseEvent) => {
-      if (!(event.target as Element).closest('.run-menu')) close()
-    }
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close()
-    }
-    document.addEventListener('mousedown', onMouseDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [menuFor])
 
   if (runs.length === 0) return <p>No runs logged yet.</p>
 
@@ -98,48 +80,16 @@ export const RunList = ({
                     </button>
                   </>
                 ) : (
-                  <div className="run-menu">
-                    <button
-                      type="button"
-                      className="dots"
-                      aria-label={`Actions for ${formatDate(run.date)} run`}
-                      aria-haspopup="menu"
-                      aria-expanded={menuFor === run.id}
-                      onClick={() =>
-                        setMenuFor(menuFor === run.id ? undefined : run.id)
-                      }
-                    >
-                      ⋯
-                    </button>
-                    {menuFor === run.id && (
-                      <div role="menu" className="menu">
-                        <button
-                          type="button"
-                          role="menuitem"
-                          aria-label={`Edit ${formatDate(run.date)} run`}
-                          onClick={() => {
-                            setMenuFor(undefined)
-                            onEdit(run)
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          className="danger"
-                          aria-label={`Delete ${formatDate(run.date)} run`}
-                          onClick={() => {
-                            setMenuFor(undefined)
-                            setError(undefined)
-                            setConfirming(run.id)
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <RowMenu
+                    label={`Actions for ${formatDate(run.date)} run`}
+                    editLabel={`Edit ${formatDate(run.date)} run`}
+                    deleteLabel={`Delete ${formatDate(run.date)} run`}
+                    onEdit={() => onEdit(run)}
+                    onDelete={() => {
+                      setError(undefined)
+                      setConfirming(run.id)
+                    }}
+                  />
                 )}
               </li>
             )

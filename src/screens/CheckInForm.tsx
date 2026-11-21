@@ -4,8 +4,11 @@
  * Fields: date (today by default, not in the future), when (after a run or
  * next morning), feel, any number of sore spots (area, side, pain 0 to 10),
  * and an optional note. An "Other" spot needs a description. Pain from these
- * check-ins is what the weekly gate reads. It does not touch storage: the
- * parent saves through onSave.
+ * check-ins is what the weekly gate reads. Pass `editing` to correct an
+ * existing check-in: it fills in, keeps its id (and any link to a run), shows
+ * Save changes and Cancel, and leaves the fields as they are after saving. Give
+ * it a key per check-in so switching resets the fields. It does not touch
+ * storage: the parent saves through onSave.
  */
 import { useId, useState, type FormEvent } from 'react'
 import type {
@@ -51,18 +54,29 @@ const problemWith = (
 export const CheckInForm = ({
   today,
   newId,
+  editing,
   onSave,
+  onCancel,
 }: {
   today: IsoDate
   newId: () => string
+  editing?: CheckIn
   onSave: (checkIn: CheckIn) => Promise<void>
+  onCancel?: () => void
 }) => {
   const id = useId()
-  const [date, setDate] = useState<string>(today)
-  const [kind, setKind] = useState<CheckIn['kind']>('afterRun')
-  const [feel, setFeel] = useState<CheckIn['feel']>('good')
-  const [spots, setSpots] = useState<Spot[]>([])
-  const [note, setNote] = useState('')
+  const [date, setDate] = useState<string>(editing?.date ?? today)
+  const [kind, setKind] = useState<CheckIn['kind']>(editing?.kind ?? 'afterRun')
+  const [feel, setFeel] = useState<CheckIn['feel']>(editing?.feel ?? 'good')
+  const [spots, setSpots] = useState<Spot[]>(() =>
+    (editing?.entries ?? []).map((entry) => ({
+      area: entry.area,
+      side: entry.side,
+      pain: entry.pain,
+      otherLabel: entry.otherLabel ?? '',
+    })),
+  )
+  const [note, setNote] = useState(editing?.note ?? '')
   const [error, setError] = useState<string | undefined>()
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -85,16 +99,20 @@ export const CheckInForm = ({
     try {
       const trimmed = note.trim()
       await onSave({
-        id: newId(),
+        id: editing?.id ?? newId(),
         date,
         kind,
         feel,
         entries: entriesFrom(spots),
         ...(trimmed ? { note: trimmed } : {}),
+        ...(editing?.workoutId ? { workoutId: editing.workoutId } : {}),
+        ...(editing?.activityId ? { activityId: editing.activityId } : {}),
       })
-      setSpots([])
-      setNote('')
-      setSaved(true)
+      if (!editing) {
+        setSpots([])
+        setNote('')
+        setSaved(true)
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
@@ -227,8 +245,13 @@ export const CheckInForm = ({
       />
 
       <button type="submit" disabled={saving}>
-        Save check-in
+        {editing ? 'Save changes' : 'Save check-in'}
       </button>
+      {editing && (
+        <button type="button" onClick={onCancel}>
+          Cancel
+        </button>
+      )}
       {error && <p role="alert">{error}</p>}
       {saved && <p>Check-in saved.</p>}
     </form>
