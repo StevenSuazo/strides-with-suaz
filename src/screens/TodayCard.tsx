@@ -6,84 +6,62 @@
  * edge is blue for an easy run and purple for a long one, the same colours as
  * the week strip. With nothing planned it says "Rest day" and what comes next
  * this week; if you logged a run anyway it shows that as an "Extra run".
- * Shows nothing when today is outside the week given. It does no loading.
+ * Tapping the card calls onOpen, which opens the Today page. Shows nothing
+ * when today is outside the week given. It does no loading.
  */
 import type { IsoDate, Run } from '../engine/types'
-import { dateOfDay, type PlannedRow } from '../plan/weekMatch'
+import { todayInfo } from '../plan/todayInfo'
+import type { PlannedRow } from '../plan/weekMatch'
 import { formatDate, formatMiles } from './format'
-
-const KIND_TITLE = { easy: 'Easy run', long: 'Long run' }
 
 export const TodayCard = ({
   weekStart,
   rows,
   extraRuns,
   today,
+  onOpen,
 }: {
   weekStart: IsoDate
   rows: PlannedRow[]
   extraRuns: Run[]
   today: IsoDate
+  onOpen: () => void
 }) => {
-  const todayIndex = [0, 1, 2, 3, 4, 5, 6].find(
-    (dayIndex) => dateOfDay(weekStart, dayIndex) === today,
-  )
-  if (todayIndex === undefined) return null
-
-  const planned = rows.find((row) => row.dayIndex === todayIndex)
-  const extraMiles = extraRuns
-    .filter((run) => run.date === today)
-    .reduce((sum, run) => sum + run.miles, 0)
-  const next = rows.find(
-    (row) => row.dayIndex > todayIndex && row.status !== 'done',
-  )
-
-  let edge = 'rest'
-  let title = 'Rest day'
-  let miles: string | undefined
-  let status: 'done' | 'todo' | undefined
-  let ran: string | undefined
-
-  if (planned) {
-    edge = planned.workout.kind
-    title = KIND_TITLE[planned.workout.kind]
-    miles = `${formatMiles(planned.workout.miles)} miles`
-    if (planned.status === 'done' && planned.run) {
-      status = 'done'
-      ran = `Ran ${formatMiles(planned.run.miles)} miles`
-    } else {
-      status = 'todo'
-    }
-  } else if (extraMiles > 0) {
-    edge = 'extra'
-    title = 'Extra run'
-    miles = `${formatMiles(extraMiles)} miles`
-    status = 'done'
-  }
+  const info = todayInfo(weekStart, rows, extraRuns, today)
+  if (!info) return null
 
   return (
     <section className="card today-card">
       <h2>Today&apos;s workout</h2>
-      <div className={`today-item kind-${edge}`}>
-        <div className="today-main">
-          <p className="today-title">{title}</p>
-          <p className="muted">{formatDate(today)}</p>
-          {!planned && !extraMiles && next && (
-            <p className="muted">
-              {`Next: ${formatDate(next.workout.date)}, ${next.workout.kind} run, ${formatMiles(next.workout.miles)} miles`}
-            </p>
+      <button
+        type="button"
+        className={`today-item kind-${info.kind}`}
+        aria-label="Open today's workout"
+        onClick={onOpen}
+      >
+        <span className="today-main">
+          <span className="today-title">{info.title}</span>
+          <span className="muted">{formatDate(today)}</span>
+          {info.next && (
+            <span className="muted">
+              {`Next: ${formatDate(info.next.date)}, ${info.next.kind} run, ${formatMiles(info.next.miles)} miles`}
+            </span>
           )}
-        </div>
-        {miles && <p className="today-miles">{miles}</p>}
-        {status && (
+        </span>
+        {info.miles !== undefined && (
+          <span className="today-miles">{`${formatMiles(info.miles)} miles`}</span>
+        )}
+        {info.status && (
           <span
-            className={`chip ${status === 'done' ? 'chip-done' : 'chip-upcoming'}`}
+            className={`chip ${info.status === 'done' ? 'chip-done' : 'chip-upcoming'}`}
           >
-            {status === 'done' ? 'Done' : 'To do'}
+            {info.status === 'done' ? 'Done' : 'To do'}
           </span>
         )}
-        {ran && <p className="muted today-ran">{ran}</p>}
-      </div>
+        {info.ran !== undefined && (
+          <span className="muted today-ran">{`Ran ${formatMiles(info.ran)} miles`}</span>
+        )}
+      </button>
     </section>
   )
 }

@@ -1,8 +1,9 @@
 /**
  * HomeTab.tsx: the front page: the week strip, today's workout and this week.
  *
- * The strip and today's card appear once the week's plan has loaded. If it
- * could not load, the reason is shown. The week summary always shows.
+ * The strip and today's card appear once the week's plan has loaded; tapping
+ * today's card calls onOpenToday. If the plan could not load, the reason is
+ * shown. The week summary always shows.
  */
 import type { IsoDate } from '../engine/types'
 import type { PlanView } from '../plan/progress'
@@ -15,10 +16,12 @@ export const HomeTab = ({
   view,
   today,
   schedule,
+  onOpenToday,
 }: {
   view: PlanView
   today: IsoDate
   schedule: WeekSchedule
+  onOpenToday: () => void
 }) => (
   <>
     {schedule.status === 'ready' && (
@@ -34,6 +37,7 @@ export const HomeTab = ({
           rows={schedule.rows}
           extraRuns={schedule.extraRuns}
           today={today}
+          onOpen={onOpenToday}
         />
       </>
     )}

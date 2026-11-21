@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
 import type { PlannedRun, Run } from '../engine/types'
 import { matchWeek } from '../plan/weekMatch'
 import { TodayCard } from './TodayCard'
@@ -16,7 +17,12 @@ const run = (id: string, date: string, miles: number): Run => ({
   source: 'in_app',
 })
 
-const show = (today: string, runs: Run[] = [], plan = planned) => {
+const show = (
+  today: string,
+  runs: Run[] = [],
+  plan = planned,
+  onOpen: () => void = () => {},
+) => {
   const { rows, extraRuns } = matchWeek({
     weekIndex: 2,
     weekStart: '2026-11-16',
@@ -31,6 +37,7 @@ const show = (today: string, runs: Run[] = [], plan = planned) => {
       rows={rows}
       extraRuns={extraRuns}
       today={today}
+      onOpen={onOpen}
     />,
   )
 }
@@ -131,5 +138,38 @@ describe('TodayCard: outside the week', () => {
   it('shows nothing when today is not in this week', () => {
     const { container } = show('2026-11-30')
     expect(container.firstChild).toBeNull()
+  })
+})
+
+describe('TodayCard: opening the Today page', () => {
+  it('is one button that calls onOpen when tapped', async () => {
+    const onOpen = vi.fn()
+    show('2026-11-18', [], planned, onOpen)
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's workout" }))
+    expect(onOpen).toHaveBeenCalledTimes(1)
+  })
+
+  it('can be opened on a rest day and after an extra run too', async () => {
+    const onOpen = vi.fn()
+    const { unmount } = show('2026-11-17', [], planned, onOpen)
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's workout" }))
+    unmount()
+    show('2026-11-17', [run('x', '2026-11-17', 3)], planned, onOpen)
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's workout" }))
+    expect(onOpen).toHaveBeenCalledTimes(2)
+  })
+
+  it('no longer shows the advice on the card itself', () => {
+    show('2026-11-18')
+    expect(screen.queryByText(/conversational/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /show details/i }),
+    ).not.toBeInTheDocument()
   })
 })
