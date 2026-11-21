@@ -30,6 +30,7 @@ import { LogRunForm } from './LogRunForm'
 import { PlanTab } from './PlanTab'
 import { RestoreButton } from './RestoreButton'
 import { RunList } from './RunList'
+import { RunPage } from './RunPage'
 import { TabBar, type TabId } from './TabBar'
 import { TodayPage } from './TodayPage'
 import { useHistoryPage } from './useHistoryPage'
@@ -54,7 +55,8 @@ const Tabs = ({
 }) => {
   const storage = useStorage()
   const [tab, setTab] = useState<TabId>('home')
-  const todayPage = useHistoryPage()
+  const subPage = useHistoryPage()
+  const [viewingId, setViewingId] = useState<string | undefined>()
   const [editing, setEditing] = useState<Run | undefined>()
   const [editingCheckIn, setEditingCheckIn] = useState<CheckIn | undefined>()
   const {
@@ -71,6 +73,27 @@ const Tabs = ({
   // Runs matched to this week's plan take the planned type; the rest use the
   // longest-run-of-the-week rule.
   const kinds = { ...runKinds(state.runs, PLAN.startDate), ...matchedKinds }
+
+  // One page at a time sits over the tabs: a run's page, or Today's.
+  const viewedRun = state.runs.find((run) => run.id === viewingId)
+  const runPageOpen = subPage.open && viewedRun !== undefined
+  const todayPageOpen = subPage.open && !viewedRun && todayDetail !== undefined
+
+  const openRun = (run: Run) => {
+    setViewingId(run.id)
+    subPage.show()
+  }
+
+  const openToday = () => {
+    setViewingId(undefined)
+    subPage.show()
+  }
+
+  const editFromPage = (run: Run) => {
+    setEditing(run)
+    subPage.hide()
+    setTab('log')
+  }
 
   const save = async (run: Run) => {
     await storage.saveRun(run)
@@ -98,18 +121,34 @@ const Tabs = ({
 
   return (
     <>
-      {tab === 'home' &&
-        (todayPage.open && todayDetail ? (
-          <TodayPage info={todayDetail} today={today} onBack={todayPage.hide} />
+      {runPageOpen && viewedRun && (
+        <RunPage
+          run={viewedRun}
+          kind={kinds[viewedRun.id]}
+          planned={
+            schedule.status === 'ready'
+              ? schedule.rows.find((row) => row.run?.id === viewedRun.id)
+                  ?.workout
+              : undefined
+          }
+          onBack={subPage.hide}
+          onEdit={editFromPage}
+        />
+      )}
+      {!runPageOpen &&
+        tab === 'home' &&
+        (todayPageOpen && todayDetail ? (
+          <TodayPage info={todayDetail} today={today} onBack={subPage.hide} />
         ) : (
           <HomeTab
             view={state.view}
             today={today}
             schedule={schedule}
-            onOpenToday={todayPage.show}
+            onOpenToday={openToday}
+            onOpenRun={openRun}
           />
         ))}
-      {tab === 'plan' && (
+      {!runPageOpen && tab === 'plan' && (
         <PlanTab
           view={state.view}
           runs={state.runs}
@@ -117,7 +156,7 @@ const Tabs = ({
           schedule={schedule}
         />
       )}
-      {tab === 'log' && (
+      {!runPageOpen && tab === 'log' && (
         <>
           <section className="card">
             <h2>Runs</h2>
@@ -137,6 +176,7 @@ const Tabs = ({
               kinds={kinds}
               onEdit={setEditing}
               onDelete={remove}
+              onOpen={openRun}
             />
           </section>
           <section className="card">
@@ -162,7 +202,7 @@ const Tabs = ({
           </section>
         </>
       )}
-      {tab === 'more' && (
+      {!runPageOpen && tab === 'more' && (
         <>
           <section className="card">
             <h2>Backup</h2>
@@ -180,7 +220,7 @@ const Tabs = ({
       <TabBar
         current={tab}
         onChange={(next) => {
-          if (todayPage.open) todayPage.hide()
+          if (subPage.open) subPage.hide()
           setTab(next)
         }}
       />

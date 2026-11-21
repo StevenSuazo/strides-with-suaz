@@ -5,6 +5,8 @@
  * (hours:minutes:seconds) or a plain number of minutes ("45"). A blank box is
  * undefined (nothing entered) and anything else that is not a time is null.
  * formatDuration(seconds): "38:30", or "1:05:30" from an hour up.
+ * paceOf(seconds, miles): the pace per mile as a time, like "9:35" (rounded to
+ * the second); undefined if there are no miles.
  */
 export const parseDuration = (text: string): number | undefined | null => {
   const value = text.trim()
@@ -33,3 +35,9 @@ export const formatDuration = (totalSeconds: number): string => {
     ? `${hours}:${two(minutes)}:${two(seconds)}`
     : `${minutes}:${two(seconds)}`
 }
+
+export const paceOf = (
+  totalSeconds: number,
+  miles: number,
+): string | undefined =>
+  miles > 0 ? formatDuration(Math.round(totalSeconds / miles)) : undefined

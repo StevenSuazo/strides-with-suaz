@@ -575,3 +575,49 @@ button.link {
   background: none;
   border: 0;
 }
+
+/* Run page */
+.run-page h3:first-child {
+  margin-top: 0;
+}
+
+.run-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 0 0 var(--space);
+}
+
+.run-stats dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.run-stats dd {
+  margin: 2px 0 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.items button.row-link,
+.week-strip button.day-hit {
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+
+.items button.row-link {
+  padding-left: 0;
+}
+
+.week-strip button.day-hit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  text-align: center;
+}

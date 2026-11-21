@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDuration, parseDuration } from './duration'
+import { formatDuration, paceOf, parseDuration } from './duration'
 
 describe('parseDuration', () => {
   it('reads minutes:seconds', () => {
@@ -40,5 +40,16 @@ describe('formatDuration', () => {
   it('shows hours from an hour up', () => {
     expect(formatDuration(3930)).toBe('1:05:30')
     expect(formatDuration(3600)).toBe('1:00:00')
+  })
+})
+
+describe('paceOf', () => {
+  it('gives the time per mile, rounded to the second', () => {
+    expect(paceOf(2310, 4)).toBe('9:38')
+    expect(paceOf(1800, 3.1)).toBe('9:41')
+  })
+
+  it('is undefined without miles', () => {
+    expect(paceOf(1800, 0)).toBeUndefined()
   })
 })

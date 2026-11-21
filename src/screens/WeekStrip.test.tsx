@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { PlannedRun, Run } from '../engine/types'
 import { matchWeek } from '../plan/weekMatch'
@@ -16,7 +17,12 @@ const run = (id: string, date: string, miles: number): Run => ({
   source: 'in_app',
 })
 
-const show = (runs: Run[] = [], today = '2026-11-17', plan = planned) => {
+const show = (
+  runs: Run[] = [],
+  today = '2026-11-17',
+  plan = planned,
+  onOpenRun?: (run: Run) => void,
+) => {
   const { rows, extraRuns } = matchWeek({
     weekIndex: 2,
     weekStart: '2026-11-16',
@@ -31,6 +37,7 @@ const show = (runs: Run[] = [], today = '2026-11-17', plan = planned) => {
       rows={rows}
       extraRuns={extraRuns}
       today={today}
+      onOpenRun={onOpenRun}
     />,
   )
 }
@@ -116,5 +123,39 @@ describe('WeekStrip', () => {
   it('shows an empty week with no dots', () => {
     show([], '2026-11-17', [])
     expect(document.querySelectorAll('.dot').length).toBe(0)
+  })
+})
+
+describe('WeekStrip: opening a run', () => {
+  it('makes a done day tappable and hands over its run', async () => {
+    const opened: Run[] = []
+    show([run('r1', '2026-11-16', 2.4)], '2026-11-17', planned, (r) =>
+      opened.push(r),
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Run details for Mon, Nov 16' }),
+    )
+    expect(opened.map((r) => r.id)).toEqual(['r1'])
+  })
+
+  it('makes an extra-run day tappable too', async () => {
+    const opened: Run[] = []
+    show([run('x1', '2026-11-21', 3)], '2026-11-22', planned, (r) =>
+      opened.push(r),
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Run details for Sat, Nov 21' }),
+    )
+    expect(opened.map((r) => r.id)).toEqual(['x1'])
+  })
+
+  it('has no buttons for planned days without a run', () => {
+    show([], '2026-11-17', planned, () => {})
+    expect(screen.queryAllByRole('button')).toEqual([])
+  })
+
+  it('has no buttons at all without a handler', () => {
+    show([run('r1', '2026-11-16', 2.4)])
+    expect(screen.queryAllByRole('button')).toEqual([])
   })
 })

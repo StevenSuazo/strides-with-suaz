@@ -2,10 +2,11 @@
  * HomeTab.tsx: the front page: the week strip, today's workout and this week.
  *
  * The strip and today's card appear once the week's plan has loaded; tapping
- * today's card calls onOpenToday. If the plan could not load, the reason is
+ * today's card calls onOpenToday, and tapping a day with a run in the strip
+ * calls onOpenRun (as does today's card once today's run is logged). If the plan could not load, the reason is
  * shown. The week summary always shows.
  */
-import type { IsoDate } from '../engine/types'
+import type { IsoDate, Run } from '../engine/types'
 import type { PlanView } from '../plan/progress'
 import { ThisWeek } from './ThisWeek'
 import { TodayCard } from './TodayCard'
@@ -17,11 +18,13 @@ export const HomeTab = ({
   today,
   schedule,
   onOpenToday,
+  onOpenRun,
 }: {
   view: PlanView
   today: IsoDate
   schedule: WeekSchedule
   onOpenToday: () => void
+  onOpenRun: (run: Run) => void
 }) => (
   <>
     {schedule.status === 'ready' && (
@@ -31,6 +34,7 @@ export const HomeTab = ({
           rows={schedule.rows}
           extraRuns={schedule.extraRuns}
           today={today}
+          onOpenRun={onOpenRun}
         />
         <TodayCard
           weekStart={schedule.weekStart}
@@ -38,6 +42,7 @@ export const HomeTab = ({
           extraRuns={schedule.extraRuns}
           today={today}
           onOpen={onOpenToday}
+          onOpenRun={onOpenRun}
         />
       </>
     )}

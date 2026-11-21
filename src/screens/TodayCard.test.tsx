@@ -22,6 +22,7 @@ const show = (
   runs: Run[] = [],
   plan = planned,
   onOpen: () => void = () => {},
+  onOpenRun?: (run: Run) => void,
 ) => {
   const { rows, extraRuns } = matchWeek({
     weekIndex: 2,
@@ -38,6 +39,7 @@ const show = (
       extraRuns={extraRuns}
       today={today}
       onOpen={onOpen}
+      onOpenRun={onOpenRun}
     />,
   )
 }
@@ -171,5 +173,50 @@ describe('TodayCard: opening the Today page', () => {
     expect(
       screen.queryByRole('button', { name: /show details/i }),
     ).not.toBeInTheDocument()
+  })
+})
+
+describe('TodayCard: opening the run once it is logged', () => {
+  it('opens the run, not the Today page, when today is done', async () => {
+    const onOpen = vi.fn()
+    const onOpenRun = vi.fn()
+    show(
+      '2026-11-18',
+      [run('r1', '2026-11-18', 2.4)],
+      planned,
+      onOpen,
+      onOpenRun,
+    )
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's run" }))
+    expect(onOpenRun).toHaveBeenCalledWith(run('r1', '2026-11-18', 2.4))
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it('opens an extra run logged on a rest day', async () => {
+    const onOpenRun = vi.fn()
+    show(
+      '2026-11-17',
+      [run('x', '2026-11-17', 3)],
+      planned,
+      () => {},
+      onOpenRun,
+    )
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's run" }))
+    expect(onOpenRun).toHaveBeenCalledWith(run('x', '2026-11-17', 3))
+  })
+
+  it('still opens the Today page while the run is to do', async () => {
+    const onOpen = vi.fn()
+    const onOpenRun = vi.fn()
+    show('2026-11-18', [], planned, onOpen, onOpenRun)
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: "Open today's workout" }))
+    expect(onOpen).toHaveBeenCalledTimes(1)
+    expect(onOpenRun).not.toHaveBeenCalled()
   })
 })

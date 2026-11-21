@@ -952,3 +952,128 @@ describe('Dashboard: tabs', () => {
     ).not.toBeInTheDocument()
   })
 })
+
+describe('Dashboard: the run page', () => {
+  afterEach(() => {
+    window.history.replaceState(null, '')
+  })
+
+  it('opens from the Log list with the run, then Back returns to the Log tab', async () => {
+    show(await seededStorage())
+    await openTab('Log')
+    fireEvent.click(
+      screen.getByRole('button', { name: /Sun, Nov 15: 4.01 miles/ }),
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Long run' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('4.01 miles')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Runs' }),
+    ).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('heading', { name: 'Runs' })).toBeInTheDocument()
+  })
+
+  it('opens from a day with a run in the Home strip, naming the planned workout', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+    })
+    show(storage)
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Run details for Mon, Nov 16',
+      }),
+    )
+    expect(screen.getByText('2.5 miles')).toBeInTheDocument()
+    expect(
+      screen.getByText('Planned: Mon, Nov 16, easy run, 2.3 miles'),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('group', { name: 'This week' })).toBeInTheDocument()
+  })
+
+  it('shows the details a run has', async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-16',
+      miles: 2.5,
+      source: 'in_app',
+      durationSeconds: 1500,
+      avgHeartRate: 148,
+    })
+    show(storage)
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'Run details for Mon, Nov 16',
+      }),
+    )
+    expect(screen.getByText('25:00')).toBeInTheDocument()
+    expect(screen.getByText('10:00 /mi')).toBeInTheDocument()
+    expect(screen.getByText('148 bpm')).toBeInTheDocument()
+  })
+
+  it('has no tap target on days without a run', async () => {
+    show(await seededStorage())
+    await screen.findByRole('group', { name: 'This week' })
+    expect(
+      screen.queryByRole('button', { name: /Run details for/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('Edit run opens the Log tab with the form filled in', async () => {
+    show(await seededStorage())
+    await openTab('Log')
+    fireEvent.click(
+      screen.getByRole('button', { name: /Sun, Nov 15: 4.01 miles/ }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Edit run' }))
+    expect(screen.getByText('Edit run')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Save changes' }),
+    ).toBeInTheDocument()
+    expect((screen.getByLabelText('Miles') as HTMLInputElement).value).toBe(
+      '4.01',
+    )
+  })
+
+  it('closes when you switch tabs', async () => {
+    show(await seededStorage())
+    await openTab('Log')
+    fireEvent.click(
+      screen.getByRole('button', { name: /Sun, Nov 15: 4.01 miles/ }),
+    )
+    goTo('Plan')
+    expect(
+      screen.queryByRole('heading', { name: 'Long run' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Planned runs' }),
+    ).toBeInTheDocument()
+  })
+
+  it("opens today's run from the Today card once it is logged", async () => {
+    const storage = await seededStorage()
+    await storage.saveRun({
+      id: 'r1',
+      date: '2026-11-18',
+      miles: 2.4,
+      source: 'in_app',
+    })
+    render(
+      <StorageProvider storage={storage}>
+        <Dashboard today="2026-11-18" newId={() => 'x'} />
+      </StorageProvider>,
+    )
+    fireEvent.click(
+      await screen.findByRole('button', { name: "Open today's run" }),
+    )
+    expect(screen.getByText('2.4 miles')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit run' })).toBeInTheDocument()
+  })
+})

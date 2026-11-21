@@ -22,6 +22,7 @@ const setup = (
   handlers: {
     onEdit?: (run: Run) => void
     onDelete?: (id: string) => Promise<void>
+    onOpen?: (run: Run) => void
     kinds?: Record<string, RunKind>
   } = {},
 ) => {
@@ -31,6 +32,7 @@ const setup = (
     <RunList
       runs={runs}
       kinds={handlers.kinds ?? {}}
+      onOpen={handlers.onOpen}
       onEdit={(r) => {
         handlers.onEdit?.(r)
         edited.push(r)
@@ -213,5 +215,25 @@ describe('RunList', () => {
     const [item] = screen.getAllByRole('listitem')
     expect(item.querySelector('.dot')).toBeNull()
     expect(item.textContent).not.toMatch(/Easy|Long/)
+  })
+})
+
+describe('RunList: opening a run', () => {
+  it('opens a run when its text is tapped', async () => {
+    const opened: Run[] = []
+    const { user } = setup([run('a', '2026-11-15', 4.01)], {
+      onOpen: (r) => opened.push(r),
+    })
+    await user.click(
+      screen.getByRole('button', { name: /Sun, Nov 15: 4.01 miles/ }),
+    )
+    expect(opened.map((r) => r.id)).toEqual(['a'])
+  })
+
+  it('is plain text when nothing handles opening', () => {
+    setup([run('a', '2026-11-15', 4.01)])
+    expect(
+      screen.queryByRole('button', { name: /Sun, Nov 15: 4.01 miles/ }),
+    ).not.toBeInTheDocument()
   })
 })
