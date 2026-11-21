@@ -1052,8 +1052,9 @@ describe('Dashboard: the run page', () => {
     expect(
       screen.queryByRole('heading', { name: 'Long run' }),
     ).not.toBeInTheDocument()
+    // The Planned runs card appears once the week's availability has loaded.
     expect(
-      screen.getByRole('heading', { name: 'Planned runs' }),
+      await screen.findByRole('heading', { name: 'Planned runs' }),
     ).toBeInTheDocument()
   })
 

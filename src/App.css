@@ -581,6 +581,34 @@ button.link {
   margin-top: 0;
 }
 
+.run-side {
+  float: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 46%;
+  margin-left: 8px;
+  text-align: right;
+}
+
+.run-side-centered {
+  position: absolute;
+  top: 50%;
+  right: var(--space);
+  float: none;
+  margin: 0;
+  transform: translateY(-50%);
+}
+
+.run-side p {
+  margin: 0 0 2px;
+}
+
+.run-side .run-pace {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
 .run-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

@@ -62,6 +62,7 @@ describe('RunPage', () => {
     )
     expect(screen.getByText('38:30')).toBeInTheDocument()
     expect(screen.getByText('9:38 /mi')).toBeInTheDocument()
+    expect(screen.queryByText('Pace')).not.toBeInTheDocument()
     expect(screen.getByText('152 bpm')).toBeInTheDocument()
     expect(screen.getByText('171 bpm')).toBeInTheDocument()
     expect(screen.getByText('168 spm')).toBeInTheDocument()
@@ -71,8 +72,17 @@ describe('RunPage', () => {
   it('leaves out details the run does not have', () => {
     show({ ...base, avgHeartRate: 150 }, 'easy')
     expect(screen.getByText('150 bpm')).toBeInTheDocument()
-    expect(screen.queryByText('Time')).not.toBeInTheDocument()
     expect(screen.queryByText('Cadence')).not.toBeInTheDocument()
+    expect(screen.queryByText(/\/mi/)).not.toBeInTheDocument()
+  })
+
+  it('does not say there are no details when only the time is logged', () => {
+    show({ ...base, durationSeconds: 2310 }, 'easy')
+    expect(screen.queryByText(/No extra details yet/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Details' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('9:38 /mi')).toBeInTheDocument()
   })
 
   it('says how to add details when there are none', () => {
@@ -100,5 +110,51 @@ describe('RunPage', () => {
     expect(onBack).toHaveBeenCalled()
     await userEvent.click(screen.getByRole('button', { name: 'Edit run' }))
     expect(onEdit).toHaveBeenCalledWith(base)
+  })
+})
+
+describe('RunPage: the header side', () => {
+  it('shows a running figure when the run has no details', () => {
+    show(base, 'easy')
+    expect(screen.getByRole('img', { name: 'Running' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('img', { name: 'Thumbs up' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('centres the running figure in the header, and not the pace side', () => {
+    const { container, unmount } = show(base, 'easy')
+    expect(container.querySelector('.run-side-centered')).not.toBeNull()
+    unmount()
+    const detailed = show({ ...base, durationSeconds: 2310 }, 'easy')
+    expect(detailed.container.querySelector('.run-side-centered')).toBeNull()
+  })
+
+  it('shows pace, time and a thumbs up when the run has details', () => {
+    show({ ...base, durationSeconds: 2310 }, 'easy')
+    expect(screen.getByText('9:38 /mi')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Thumbs up' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('img', { name: 'Running' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows the thumbs up for other details even without a time', () => {
+    show({ ...base, avgHeartRate: 150 }, 'easy')
+    expect(screen.getByRole('img', { name: 'Thumbs up' })).toBeInTheDocument()
+    expect(screen.queryByText(/\/mi/)).not.toBeInTheDocument()
+  })
+
+  it('no longer says how far over or under the plan, or offers Add details', () => {
+    show({ ...base, durationSeconds: 2310 }, 'easy', {
+      id: 'w2-2',
+      date: '2026-11-18',
+      miles: 3.8,
+      kind: 'easy',
+    })
+    expect(screen.queryByText(/vs plan|On plan/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Add details' }),
+    ).not.toBeInTheDocument()
   })
 })
