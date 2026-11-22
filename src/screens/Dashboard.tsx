@@ -142,6 +142,7 @@ const Tabs = ({
         ) : (
           <HomeTab
             view={state.view}
+            runs={state.runs}
             today={today}
             schedule={schedule}
             onOpenToday={openToday}

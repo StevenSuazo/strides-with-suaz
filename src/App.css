@@ -705,3 +705,41 @@ button.calendar-row {
   margin: 0 0 8px;
   font-size: 0.85rem;
 }
+
+/* Swipeable week strip on Home */
+.week-pager {
+  display: flex;
+  margin: 0 calc(var(--space) * -1) var(--space);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.week-pager::-webkit-scrollbar {
+  display: none;
+}
+
+.week-panel {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.week-panel .week-strip {
+  margin: 0;
+  box-shadow: none;
+  border-bottom: 0;
+}
+
+.week-panel-label {
+  margin: 0;
+  padding: 8px var(--space) 0;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.week-panel-projected .week-strip {
+  opacity: 0.7;
+}

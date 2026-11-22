@@ -14,92 +14,24 @@
  * With onOpenRun, a day with a run in any of the strips is tappable and opens
  * that run's page. Nothing here changes anything.
  */
-import { useEffect, useState } from 'react'
-import { placeRuns, weekStartDate } from '../engine'
-import type {
-  IsoDate,
-  Run,
-  WeekAvailability,
-  WeekTarget,
-} from '../engine/types'
+import { useState } from 'react'
+import { weekStartDate } from '../engine'
+import type { IsoDate, Run } from '../engine/types'
 import { targetForWeek } from '../plan/pastWeeks'
 import type { PlanView, SettledWeek } from '../plan/progress'
 import { projectedRows } from '../plan/projection'
 import { PLAN } from '../plan/settings'
-import { dateOfDay, matchWeek, type PlannedRow } from '../plan/weekMatch'
-import { useStorage } from '../storage/useStorage'
+import { dateOfDay, type PlannedRow } from '../plan/weekMatch'
 import { AFTER } from './decisionLabels'
 import { formatMiles, formatRange } from './format'
+import { PastWeekStrip } from './PastWeekStrip'
 import { WeekStrip } from './WeekStrip'
-
-const ALL_OPEN: WeekAvailability = Array(7).fill('open')
 
 export type CurrentWeek = {
   weekIndex: number
   weekStart: IsoDate
   rows: PlannedRow[]
   extraRuns: Run[]
-}
-
-type Loaded = {
-  availability: WeekAvailability
-  overrides: Record<string, string>
-}
-
-const PastWeekBody = ({
-  weekIndex,
-  target,
-  runs,
-  today,
-  onOpenRun,
-}: {
-  weekIndex: number
-  target: WeekTarget
-  runs: Run[]
-  today: IsoDate
-  onOpenRun?: (run: Run) => void
-}) => {
-  const storage = useStorage()
-  const [loaded, setLoaded] = useState<Loaded>()
-  const [error, setError] = useState<string>()
-
-  useEffect(() => {
-    let active = true
-    Promise.all([storage.getAvailability(weekIndex), storage.getOverrides()])
-      .then(([saved, overrides]) => {
-        if (active) setLoaded({ availability: saved ?? ALL_OPEN, overrides })
-      })
-      .catch((caught: unknown) => {
-        if (active)
-          setError(caught instanceof Error ? caught.message : String(caught))
-      })
-    return () => {
-      active = false
-    }
-  }, [storage, weekIndex])
-
-  if (error) return <p role="alert">{`Couldn't load this week: ${error}`}</p>
-  if (!loaded) return <p className="muted">Loading…</p>
-
-  const weekStart = weekStartDate(weekIndex, PLAN.startDate)
-  const { rows, extraRuns } = matchWeek({
-    weekIndex,
-    weekStart,
-    planned: placeRuns(target, loaded.availability).runs,
-    runs,
-    overrides: loaded.overrides,
-    today,
-  })
-  return (
-    <WeekStrip
-      weekStart={weekStart}
-      rows={rows}
-      extraRuns={extraRuns}
-      today={today}
-      stripLabel={`Week ${weekIndex}`}
-      onOpenRun={onOpenRun}
-    />
-  )
 }
 
 const PastWeek = ({
@@ -143,7 +75,7 @@ const PastWeek = ({
         )}
       </button>
       {open && target && (
-        <PastWeekBody
+        <PastWeekStrip
           weekIndex={weekIndex}
           target={target}
           runs={runs}
