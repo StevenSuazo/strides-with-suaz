@@ -96,12 +96,32 @@ describe('CalendarCard: opening a run', () => {
 })
 
 describe('CalendarCard: the projected week', () => {
-  it('shows next week as projected, with the planned runs and why', () => {
-    show()
-    const strip = screen.getByRole('group', { name: 'Week 3, projected' })
-    expect(strip).toBeInTheDocument()
+  const open = (week: number) =>
+    userEvent.click(
+      screen.getByRole('button', { name: new RegExp(`Week ${week}\\b`) }),
+    )
+
+  it('is a closed row above this week, marked projected', () => {
+    show({ weekIndex: 2, weekStart: '2026-11-16', rows: [], extraRuns: [] })
+    const row = screen.getByRole('button', { name: /Week 3\b/ })
+    expect(row).toHaveAttribute('aria-expanded', 'false')
+    expect(row).toHaveTextContent('Nov 23–29')
+    expect(row).toHaveTextContent('Projected')
+    expect(row).toHaveTextContent('Subject to change')
     expect(
-      screen.getByText(/Nov 23–29 · Projected, subject to change/),
+      screen.queryByRole('group', { name: 'Week 3, projected' }),
+    ).not.toBeInTheDocument()
+    const thisWeek = screen.getByRole('group', { name: 'Week 2, this week' })
+    expect(
+      row.compareDocumentPosition(thisWeek) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('opens to show the planned runs and why', async () => {
+    show()
+    await open(3)
+    expect(
+      screen.getByRole('group', { name: 'Week 3, projected' }),
     ).toBeInTheDocument()
     expect(
       screen.getByText(
@@ -117,20 +137,28 @@ describe('CalendarCard: the projected week', () => {
     ).toBe(true)
   })
 
-  it('shows the projection even before this week has loaded', () => {
-    show(undefined)
+  it('closes again when tapped twice', async () => {
+    show()
+    await open(3)
+    await open(3)
     expect(
-      screen.getByRole('group', { name: 'Week 3, projected' }),
-    ).toBeInTheDocument()
+      screen.queryByRole('group', { name: 'Week 3, projected' }),
+    ).not.toBeInTheDocument()
   })
 
-  it('has nothing to open on a projected day', () => {
+  it('shows the row even before this week has loaded', () => {
+    show(undefined)
+    expect(screen.getByRole('button', { name: /Week 3\b/ })).toBeInTheDocument()
+  })
+
+  it('has nothing to open on a projected day', async () => {
     show(undefined, () => {})
+    await open(3)
     const strip = screen.getByRole('group', { name: 'Week 3, projected' })
     expect(strip.querySelector('button')).toBeNull()
   })
 
-  it('shows only the projection in week 1', () => {
+  it('shows only the projection row in week 1', () => {
     const week1 = computePlan({
       runs: [],
       checkIns: [],
@@ -142,11 +170,9 @@ describe('CalendarCard: the projected week', () => {
         <CalendarCard view={week1} runs={[]} today="2026-11-10" />
       </StorageProvider>,
     )
+    expect(screen.getByRole('button', { name: /Week 2\b/ })).toBeInTheDocument()
     expect(
-      screen.getByRole('group', { name: 'Week 2, projected' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /Week 1/ }),
+      screen.queryByRole('button', { name: /Week 1\b/ }),
     ).not.toBeInTheDocument()
   })
 

@@ -701,6 +701,11 @@ button.calendar-row {
   opacity: 0.7;
 }
 
+.calendar-projected button.calendar-row {
+  border-top: 0;
+  border-bottom: 1px solid var(--border);
+}
+
 .calendar-note {
   margin: 0 0 8px;
   font-size: 0.85rem;
