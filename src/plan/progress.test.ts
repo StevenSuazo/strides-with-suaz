@@ -102,6 +102,47 @@ describe('computePlan: your real week 1', () => {
   })
 })
 
+describe('computePlan: the projected next week', () => {
+  it('projects week 2 during week 1, as if week 1 hits its target', () => {
+    const view = plan('2026-11-11', weekOneRuns.slice(0, 2), [])
+    expect(view.projectedNext?.weekIndex).toBe(2)
+    expect(view.projectedNext?.targetMiles).toBeGreaterThan(8.5)
+    // It is only a projection: this week's real target is untouched.
+    expect(view.target).toEqual({
+      weekIndex: 1,
+      targetMiles: 8.5,
+      longRunMiles: 4,
+    })
+  })
+
+  it('projects week 3 during week 2, building on the real week 1', () => {
+    const view = plan('2026-11-17')
+    expect(view.projectedNext?.weekIndex).toBe(3)
+    expect(view.projectedNext?.targetMiles).toBeGreaterThan(
+      view.target?.targetMiles ?? Infinity,
+    )
+  })
+
+  it('does not depend on how much of this week has been run', () => {
+    const none = plan('2026-11-17')
+    const some = plan('2026-11-17', [...weekOneRuns, run('x', '2026-11-16', 3)])
+    expect(some.projectedNext).toEqual(none.projectedNext)
+  })
+
+  it('has no projection before the plan starts or after it ends', () => {
+    expect(plan('2026-11-08', [], []).projectedNext).toBeUndefined()
+    expect(plan('2027-03-22').projectedNext).toBeUndefined()
+  })
+
+  it('has no projection in race week, the last one', () => {
+    expect(plan('2027-03-21').projectedNext).toBeUndefined()
+  })
+
+  it('projects the race week during week 18', () => {
+    expect(plan('2027-03-08').projectedNext?.weekIndex).toBe(19)
+  })
+})
+
 describe('computePlan: what to save', () => {
   it('saves nothing when the saved week already matches', () => {
     expect(plan('2026-11-17').resultsToSave).toEqual([])

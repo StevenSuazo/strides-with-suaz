@@ -13,7 +13,10 @@
  * so the caller can save only what changed. Fixing an old run therefore
  * re-derives that week and every target after it.
  * status is notStarted before the start date, finished after week 19 ends.
- * milesSoFar is the miles in today's week. A bad date throws a RangeError.
+ * milesSoFar is the miles in today's week. projectedNext is a look ahead while
+ * a week is in progress (and it is not the last): the target the gate would give
+ * next week if this week ends exactly on its target with no pain. It is a
+ * projection only, and changes as the real week plays out. A bad date throws a RangeError.
  */
 import {
   DEFAULT_CONFIG,
@@ -47,6 +50,7 @@ export type PlanView = {
   decision?: Decision
   reason?: string
   milesSoFar: number
+  projectedNext?: WeekTarget
   weeks: SettledWeek[]
   curve: number[]
   goal: GoalCheck
@@ -141,6 +145,22 @@ export const computePlan: (input: Input) => PlanView = ({
         }).actualMiles
       : 0
 
+  const projectedNext =
+    status === 'inProgress' && target && todayWeek < totalWeeks
+      ? gate(
+          {
+            weekIndex: todayWeek,
+            targetMiles: target.targetMiles,
+            actualMiles: target.targetMiles,
+            longRunMiles: target.longRunMiles,
+            highestPain: 0,
+          },
+          curve,
+          state,
+          config,
+        ).next
+      : undefined
+
   const resultsToSave = weeks
     .map((week) => week.result)
     .filter((result) => {
@@ -156,6 +176,7 @@ export const computePlan: (input: Input) => PlanView = ({
       ? { decision: lastGate.decision, reason: lastGate.reason }
       : {}),
     milesSoFar,
+    ...(projectedNext ? { projectedNext } : {}),
     weeks,
     curve,
     goal: goalCheck(

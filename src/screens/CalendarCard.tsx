@@ -1,8 +1,10 @@
 /**
- * CalendarCard.tsx: every week of the plan so far, newest first.
+ * CalendarCard.tsx: every week of the plan so far, newest first, and next week.
  *
  * - This week sits open at the top as a week strip (done days green, missed
  *   days red), when it is loaded.
+ * - Next week sits under it, dimmed and labelled "Projected, subject to change":
+ *   the runs the gate would plan if this week ends on its target.
  * - Each finished week is a row: "Week 3", its dates, miles run of the target
  *   and what the gate decided afterwards. Tap a row to open that week's strip.
  *   Opening it loads that week's saved availability and hand matches, rebuilds
@@ -10,7 +12,7 @@
  *   runs the same way the current week is matched. Weeks with nothing saved
  *   count as all days open.
  * With onOpenRun, a day with a run in any of the strips is tappable and opens
- * that run's page. Nothing here changes anything: it is a look back.
+ * that run's page. Nothing here changes anything.
  */
 import { useEffect, useState } from 'react'
 import { placeRuns, weekStartDate } from '../engine'
@@ -22,6 +24,7 @@ import type {
 } from '../engine/types'
 import { targetForWeek } from '../plan/pastWeeks'
 import type { PlanView, SettledWeek } from '../plan/progress'
+import { projectedRows } from '../plan/projection'
 import { PLAN } from '../plan/settings'
 import { dateOfDay, matchWeek, type PlannedRow } from '../plan/weekMatch'
 import { useStorage } from '../storage/useStorage'
@@ -166,7 +169,9 @@ export const CalendarCard = ({
   onOpenRun?: (run: Run) => void
 }) => {
   const past = [...view.weeks].reverse()
-  if (!current && past.length === 0) return null
+  const next = view.status === 'inProgress' ? view.projectedNext : undefined
+  const nextStart = next && weekStartDate(next.weekIndex, PLAN.startDate)
+  if (!current && !next && past.length === 0) return null
   return (
     <section className="card calendar-card">
       <h2>Calendar</h2>
@@ -186,6 +191,28 @@ export const CalendarCard = ({
             stripLabel={`Week ${current.weekIndex}, this week`}
             onOpenRun={onOpenRun}
           />
+        </div>
+      )}
+      {next && nextStart && (
+        <div className="calendar-week calendar-projected">
+          <p className="calendar-current">
+            <strong>{`Week ${next.weekIndex}`}</strong>{' '}
+            <span className="muted">
+              {`${formatRange(nextStart, dateOfDay(nextStart, 6))} · Projected, subject to change`}
+            </span>
+          </p>
+          <WeekStrip
+            weekStart={nextStart}
+            rows={projectedRows(next, nextStart)}
+            extraRuns={[]}
+            today={today}
+            stripLabel={`Week ${next.weekIndex}, projected`}
+          />
+          {view.target && (
+            <p className="muted calendar-note">
+              {`If you hit this week's target of ${formatMiles(view.target.targetMiles)} miles.`}
+            </p>
+          )}
         </div>
       )}
       {past.length > 0 && (

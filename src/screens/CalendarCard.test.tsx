@@ -65,16 +65,16 @@ describe('CalendarCard', () => {
     expect(screen.getByText(/Nov 16–22 · This week/)).toBeInTheDocument()
   })
 
-  it('shows nothing before any week has finished or loaded', () => {
+  it('shows nothing before the plan starts', () => {
     const early = computePlan({
       runs: [],
       checkIns: [],
       savedResults: [],
-      today: '2026-11-10',
+      today: '2026-11-08',
     })
     const { container } = render(
       <StorageProvider storage={emptyStorage()}>
-        <CalendarCard view={early} runs={[]} today="2026-11-10" />
+        <CalendarCard view={early} runs={[]} today="2026-11-08" />
       </StorageProvider>,
     )
     expect(container).toBeEmptyDOMElement()
@@ -92,5 +92,76 @@ describe('CalendarCard: opening a run', () => {
     expect(days.length).toBeGreaterThan(0)
     await userEvent.click(days[0])
     expect(weekOneRuns.map((run) => run.id)).toContain(opened[0].id)
+  })
+})
+
+describe('CalendarCard: the projected week', () => {
+  it('shows next week as projected, with the planned runs and why', () => {
+    show()
+    const strip = screen.getByRole('group', { name: 'Week 3, projected' })
+    expect(strip).toBeInTheDocument()
+    expect(
+      screen.getByText(/Nov 23–29 · Projected, subject to change/),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        `If you hit this week's target of ${view.target?.targetMiles} miles.`,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen
+        .getAllByRole('group')
+        .some((g) =>
+          /planned, coming up/.test(g.getAttribute('aria-label') ?? ''),
+        ),
+    ).toBe(true)
+  })
+
+  it('shows the projection even before this week has loaded', () => {
+    show(undefined)
+    expect(
+      screen.getByRole('group', { name: 'Week 3, projected' }),
+    ).toBeInTheDocument()
+  })
+
+  it('has nothing to open on a projected day', () => {
+    show(undefined, () => {})
+    const strip = screen.getByRole('group', { name: 'Week 3, projected' })
+    expect(strip.querySelector('button')).toBeNull()
+  })
+
+  it('shows only the projection in week 1', () => {
+    const week1 = computePlan({
+      runs: [],
+      checkIns: [],
+      savedResults: [],
+      today: '2026-11-10',
+    })
+    render(
+      <StorageProvider storage={emptyStorage()}>
+        <CalendarCard view={week1} runs={[]} today="2026-11-10" />
+      </StorageProvider>,
+    )
+    expect(
+      screen.getByRole('group', { name: 'Week 2, projected' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Week 1/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('has no projection in race week', () => {
+    const race = computePlan({
+      runs: [],
+      checkIns: [],
+      savedResults: [],
+      today: '2027-03-21',
+    })
+    render(
+      <StorageProvider storage={emptyStorage()}>
+        <CalendarCard view={race} runs={[]} today="2027-03-21" />
+      </StorageProvider>,
+    )
+    expect(screen.queryByText(/Projected/)).not.toBeInTheDocument()
   })
 })
