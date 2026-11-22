@@ -1020,9 +1020,10 @@ describe('Dashboard: the run page', () => {
 
   it('has no tap target on days without a run', async () => {
     show(await seededStorage())
-    await screen.findByRole('group', { name: 'This week' })
+    const week = await screen.findByRole('group', { name: 'This week' })
+    // Only this week's strip: last week's runs are tappable in its own panel.
     expect(
-      screen.queryByRole('button', { name: /Run details for/ }),
+      within(week).queryByRole('button', { name: /Run details for/ }),
     ).not.toBeInTheDocument()
   })
 

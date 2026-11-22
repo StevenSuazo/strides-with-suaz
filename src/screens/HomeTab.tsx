@@ -1,5 +1,6 @@
 /**
- * HomeTab.tsx: the front page: the week strip, today's workout and this week.
+ * HomeTab.tsx: the front page: the swipeable week strip (WeekPager), today's
+ * workout and this week.
  *
  * The strip and today's card appear once the week's plan has loaded; tapping
  * today's card calls onOpenToday, and tapping a day with a run in the strip
@@ -11,16 +12,18 @@ import type { PlanView } from '../plan/progress'
 import { ThisWeek } from './ThisWeek'
 import { TodayCard } from './TodayCard'
 import type { WeekSchedule } from './useWeekSchedule'
-import { WeekStrip } from './WeekStrip'
+import { WeekPager } from './WeekPager'
 
 export const HomeTab = ({
   view,
+  runs,
   today,
   schedule,
   onOpenToday,
   onOpenRun,
 }: {
   view: PlanView
+  runs: Run[]
   today: IsoDate
   schedule: WeekSchedule
   onOpenToday: () => void
@@ -29,11 +32,14 @@ export const HomeTab = ({
   <>
     {schedule.status === 'ready' && (
       <>
-        <WeekStrip
+        <WeekPager
+          view={view}
+          runs={runs}
+          today={today}
+          weekIndex={schedule.weekIndex}
           weekStart={schedule.weekStart}
           rows={schedule.rows}
           extraRuns={schedule.extraRuns}
-          today={today}
           onOpenRun={onOpenRun}
         />
         <TodayCard

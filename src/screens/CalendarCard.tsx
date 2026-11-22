@@ -1,10 +1,11 @@
 /**
  * CalendarCard.tsx: every week of the plan so far, newest first, and next week.
  *
- * - This week sits open at the top as a week strip (done days green, missed
- *   days red), when it is loaded.
- * - Next week sits under it, dimmed and labelled "Projected, subject to change":
- *   the runs the gate would plan if this week ends on its target.
+ * - Next week is a row at the very top, closed until you tap it: "Projected,
+ *   subject to change", the runs the gate would plan if this week ends on its
+ *   target (shown dimmed).
+ * - This week sits open under it as a week strip (done days green, missed
+ *   days red), when it is loaded, and stays open.
  * - Each finished week is a row: "Week 3", its dates, miles run of the target
  *   and what the gate decided afterwards. Tap a row to open that week's strip.
  *   Opening it loads that week's saved availability and hand matches, rebuilds
@@ -14,92 +15,24 @@
  * With onOpenRun, a day with a run in any of the strips is tappable and opens
  * that run's page. Nothing here changes anything.
  */
-import { useEffect, useState } from 'react'
-import { placeRuns, weekStartDate } from '../engine'
-import type {
-  IsoDate,
-  Run,
-  WeekAvailability,
-  WeekTarget,
-} from '../engine/types'
+import { useState } from 'react'
+import { weekStartDate } from '../engine'
+import type { IsoDate, Run, WeekTarget } from '../engine/types'
 import { targetForWeek } from '../plan/pastWeeks'
 import type { PlanView, SettledWeek } from '../plan/progress'
 import { projectedRows } from '../plan/projection'
 import { PLAN } from '../plan/settings'
-import { dateOfDay, matchWeek, type PlannedRow } from '../plan/weekMatch'
-import { useStorage } from '../storage/useStorage'
+import { dateOfDay, type PlannedRow } from '../plan/weekMatch'
 import { AFTER } from './decisionLabels'
 import { formatMiles, formatRange } from './format'
+import { PastWeekStrip } from './PastWeekStrip'
 import { WeekStrip } from './WeekStrip'
-
-const ALL_OPEN: WeekAvailability = Array(7).fill('open')
 
 export type CurrentWeek = {
   weekIndex: number
   weekStart: IsoDate
   rows: PlannedRow[]
   extraRuns: Run[]
-}
-
-type Loaded = {
-  availability: WeekAvailability
-  overrides: Record<string, string>
-}
-
-const PastWeekBody = ({
-  weekIndex,
-  target,
-  runs,
-  today,
-  onOpenRun,
-}: {
-  weekIndex: number
-  target: WeekTarget
-  runs: Run[]
-  today: IsoDate
-  onOpenRun?: (run: Run) => void
-}) => {
-  const storage = useStorage()
-  const [loaded, setLoaded] = useState<Loaded>()
-  const [error, setError] = useState<string>()
-
-  useEffect(() => {
-    let active = true
-    Promise.all([storage.getAvailability(weekIndex), storage.getOverrides()])
-      .then(([saved, overrides]) => {
-        if (active) setLoaded({ availability: saved ?? ALL_OPEN, overrides })
-      })
-      .catch((caught: unknown) => {
-        if (active)
-          setError(caught instanceof Error ? caught.message : String(caught))
-      })
-    return () => {
-      active = false
-    }
-  }, [storage, weekIndex])
-
-  if (error) return <p role="alert">{`Couldn't load this week: ${error}`}</p>
-  if (!loaded) return <p className="muted">Loading…</p>
-
-  const weekStart = weekStartDate(weekIndex, PLAN.startDate)
-  const { rows, extraRuns } = matchWeek({
-    weekIndex,
-    weekStart,
-    planned: placeRuns(target, loaded.availability).runs,
-    runs,
-    overrides: loaded.overrides,
-    today,
-  })
-  return (
-    <WeekStrip
-      weekStart={weekStart}
-      rows={rows}
-      extraRuns={extraRuns}
-      today={today}
-      stripLabel={`Week ${weekIndex}`}
-      onOpenRun={onOpenRun}
-    />
-  )
 }
 
 const PastWeek = ({
@@ -143,7 +76,7 @@ const PastWeek = ({
         )}
       </button>
       {open && target && (
-        <PastWeekBody
+        <PastWeekStrip
           weekIndex={weekIndex}
           target={target}
           runs={runs}
@@ -152,6 +85,55 @@ const PastWeek = ({
         />
       )}
     </li>
+  )
+}
+
+const ProjectedWeek = ({
+  target,
+  weekStart,
+  today,
+  thisWeekMiles,
+}: {
+  target: WeekTarget
+  weekStart: IsoDate
+  today: IsoDate
+  thisWeekMiles?: number
+}) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="calendar-week calendar-projected">
+      <button
+        type="button"
+        className="calendar-row"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <span className="calendar-row-main">
+          <strong>{`Week ${target.weekIndex}`}</strong>
+          <span className="muted">
+            {formatRange(weekStart, dateOfDay(weekStart, 6))}
+          </span>
+        </span>
+        <span className="calendar-row-miles">Projected</span>
+        <span className="muted calendar-row-gate">Subject to change</span>
+      </button>
+      {open && (
+        <>
+          <WeekStrip
+            weekStart={weekStart}
+            rows={projectedRows(target, weekStart)}
+            extraRuns={[]}
+            today={today}
+            stripLabel={`Week ${target.weekIndex}, projected`}
+          />
+          {thisWeekMiles !== undefined && (
+            <p className="muted calendar-note">
+              {`If you hit this week's target of ${formatMiles(thisWeekMiles)} miles.`}
+            </p>
+          )}
+        </>
+      )}
+    </div>
   )
 }
 
@@ -175,6 +157,14 @@ export const CalendarCard = ({
   return (
     <section className="card calendar-card">
       <h2>Calendar</h2>
+      {next && nextStart && (
+        <ProjectedWeek
+          target={next}
+          weekStart={nextStart}
+          today={today}
+          thisWeekMiles={view.target?.targetMiles}
+        />
+      )}
       {current && (
         <div className="calendar-week">
           <p className="calendar-current">
@@ -191,28 +181,6 @@ export const CalendarCard = ({
             stripLabel={`Week ${current.weekIndex}, this week`}
             onOpenRun={onOpenRun}
           />
-        </div>
-      )}
-      {next && nextStart && (
-        <div className="calendar-week calendar-projected">
-          <p className="calendar-current">
-            <strong>{`Week ${next.weekIndex}`}</strong>{' '}
-            <span className="muted">
-              {`${formatRange(nextStart, dateOfDay(nextStart, 6))} · Projected, subject to change`}
-            </span>
-          </p>
-          <WeekStrip
-            weekStart={nextStart}
-            rows={projectedRows(next, nextStart)}
-            extraRuns={[]}
-            today={today}
-            stripLabel={`Week ${next.weekIndex}, projected`}
-          />
-          {view.target && (
-            <p className="muted calendar-note">
-              {`If you hit this week's target of ${formatMiles(view.target.targetMiles)} miles.`}
-            </p>
-          )}
         </div>
       )}
       {past.length > 0 && (
