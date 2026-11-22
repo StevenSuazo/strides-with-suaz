@@ -139,7 +139,7 @@ describe('computePlan: the projected next week', () => {
   })
 
   it('projects the race week during week 18', () => {
-    expect(plan('2027-03-15').projectedNext?.weekIndex).toBe(19)
+    expect(plan('2027-03-08').projectedNext?.weekIndex).toBe(19)
   })
 })
 
