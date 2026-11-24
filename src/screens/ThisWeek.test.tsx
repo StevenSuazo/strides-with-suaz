@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { computePlan, type PlanView } from '../plan/progress'
-import { weekOne, weekOneRuns } from '../test/fixtures'
+import { laterPlan, weekOne, weekOneRuns } from '../test/fixtures'
+import { PlanSettingsProvider } from '../plan/PlanSettingsProvider'
 import { ThisWeek } from './ThisWeek'
 
 const planFor = (today: string, withData = true): PlanView =>
@@ -118,5 +119,33 @@ describe('ThisWeek: before and after the plan', () => {
     expect(screen.getByText('Plan complete')).toBeInTheDocument()
     expect(screen.getByText('Past weeks')).toBeInTheDocument()
     expect(screen.queryByText(/so far/)).not.toBeInTheDocument()
+  })
+})
+
+describe('ThisWeek: with a different plan', () => {
+  const planView = (today: string) =>
+    computePlan({
+      runs: [],
+      checkIns: [],
+      savedResults: [],
+      today,
+      settings: laterPlan,
+    })
+
+  const showLater = (today: string) =>
+    render(
+      <PlanSettingsProvider plan={laterPlan}>
+        <ThisWeek view={planView(today)} today={today} />
+      </PlanSettingsProvider>,
+    )
+
+  it('counts down to the race date in the settings', () => {
+    showLater('2026-11-17')
+    expect(screen.getByText('131 days to the race')).toBeInTheDocument()
+  })
+
+  it('counts down to the start date in the settings', () => {
+    showLater('2026-11-11')
+    expect(screen.getByText('Plan starts in 5 days')).toBeInTheDocument()
   })
 })

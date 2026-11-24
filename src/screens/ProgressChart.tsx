@@ -12,7 +12,7 @@
  */
 import { buildChart, type ChartWeek } from '../plan/chartData'
 import type { PlanView } from '../plan/progress'
-import { PLAN } from '../plan/settings'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { AFTER } from './decisionLabels'
 import { formatDate, formatMiles } from './format'
 
@@ -41,6 +41,7 @@ const resultWords = (week: ChartWeek): string => {
 }
 
 export const ProgressChart = ({ view }: { view: PlanView }) => {
+  const { raceDate } = usePlanSettings()
   const { weeks, maxMiles, peakIndex } = buildChart(view)
   const plotWidth = WIDTH - LEFT - RIGHT
   const plotHeight = HEIGHT - TOP - BOTTOM
@@ -130,7 +131,7 @@ export const ProgressChart = ({ view }: { view: PlanView }) => {
           {formatMiles(peak.curveMiles)}
         </text>
         <text className="race-label" x={WIDTH - RIGHT} y={10} textAnchor="end">
-          {`Race ${formatDate(PLAN.raceDate)}`}
+          {`Race ${formatDate(raceDate)}`}
         </text>
 
         {weeks.map((week, index) => (

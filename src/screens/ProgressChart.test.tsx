@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { Decision, WeekResult } from '../engine/types'
 import { computePlan, type PlanView } from '../plan/progress'
-import { weekOne, weekOneRuns } from '../test/fixtures'
+import { laterPlan, weekOne, weekOneRuns } from '../test/fixtures'
+import { PlanSettingsProvider } from '../plan/PlanSettingsProvider'
 import { ProgressChart } from './ProgressChart'
 
 const realView = (today: string, withRuns = true): PlanView =>
@@ -212,5 +213,16 @@ describe('ProgressChart: table for screen readers', () => {
     )
     expect(rows()[0].textContent).toContain('Close, then repeated the target')
     expect(rows()[1].textContent).toContain('Short, then stepped back')
+  })
+})
+
+describe('ProgressChart: with a different plan', () => {
+  it('labels the race date from the settings', () => {
+    render(
+      <PlanSettingsProvider plan={laterPlan}>
+        <ProgressChart view={realView('2026-11-17')} />
+      </PlanSettingsProvider>,
+    )
+    expect(screen.getByText('Race Sun, Mar 28')).toBeInTheDocument()
   })
 })

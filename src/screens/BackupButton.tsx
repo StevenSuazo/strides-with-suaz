@@ -4,7 +4,7 @@
  * download and now can be replaced in tests.
  */
 import { useState } from 'react'
-import { PLAN } from '../plan/settings'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { backupFilename, buildBackup, downloadText } from '../backup/backup'
 import type { IsoDate } from '../engine/types'
 import { useStorage } from '../storage/useStorage'
@@ -19,6 +19,7 @@ export const BackupButton = ({
   download?: (filename: string, text: string) => void
 }) => {
   const storage = useStorage()
+  const { totalWeeks } = usePlanSettings()
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | undefined>()
 
@@ -26,7 +27,7 @@ export const BackupButton = ({
     setDone(false)
     setError(undefined)
     try {
-      const backup = await buildBackup(storage, now(), PLAN.totalWeeks)
+      const backup = await buildBackup(storage, now(), totalWeeks)
       download(backupFilename(today), JSON.stringify(backup, null, 2))
       setDone(true)
     } catch (caught) {

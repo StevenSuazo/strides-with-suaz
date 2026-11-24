@@ -19,7 +19,7 @@ import { useState, type ReactNode } from 'react'
 import type { CheckIn, IsoDate, Run } from '../engine/types'
 import { runKinds } from '../plan/runKinds'
 import { todayInfo } from '../plan/todayInfo'
-import { PLAN } from '../plan/settings'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { usePlan, type PlanState } from '../plan/usePlan'
 import { useStorage } from '../storage/useStorage'
 import { BackupButton } from './BackupButton'
@@ -54,6 +54,7 @@ const Tabs = ({
   account?: ReactNode
 }) => {
   const storage = useStorage()
+  const { startDate } = usePlanSettings()
   const [tab, setTab] = useState<TabId>('home')
   const subPage = useHistoryPage()
   const [viewingId, setViewingId] = useState<string | undefined>()
@@ -72,7 +73,7 @@ const Tabs = ({
 
   // Runs matched to this week's plan take the planned type; the rest use the
   // longest-run-of-the-week rule.
-  const kinds = { ...runKinds(state.runs, PLAN.startDate), ...matchedKinds }
+  const kinds = { ...runKinds(state.runs, startDate), ...matchedKinds }
 
   // One page at a time sits over the tabs: a run's page, or Today's.
   const viewedRun = state.runs.find((run) => run.id === viewingId)

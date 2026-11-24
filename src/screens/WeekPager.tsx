@@ -15,7 +15,7 @@ import type { IsoDate, Run } from '../engine/types'
 import { targetForWeek } from '../plan/pastWeeks'
 import type { PlanView } from '../plan/progress'
 import { projectedRows } from '../plan/projection'
-import { PLAN } from '../plan/settings'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { dateOfDay, type PlannedRow } from '../plan/weekMatch'
 import { formatRange } from './format'
 import { PastWeekStrip } from './PastWeekStrip'
@@ -47,11 +47,13 @@ export const WeekPager = ({
   onOpenRun: (run: Run) => void
 }) => {
   const scroller = useRef<HTMLDivElement>(null)
+  const settings = usePlanSettings()
   const lastTarget =
-    weekIndex > 1 ? targetForWeek(view, weekIndex - 1) : undefined
-  const lastStart = lastTarget && weekStartDate(weekIndex - 1, PLAN.startDate)
+    weekIndex > 1 ? targetForWeek(view, weekIndex - 1, settings) : undefined
+  const lastStart =
+    lastTarget && weekStartDate(weekIndex - 1, settings.startDate)
   const next = view.projectedNext
-  const nextStart = next && weekStartDate(next.weekIndex, PLAN.startDate)
+  const nextStart = next && weekStartDate(next.weekIndex, settings.startDate)
   const hasLast = lastTarget !== undefined
 
   // Open on this week: scroll past the last-week panel when there is one.
