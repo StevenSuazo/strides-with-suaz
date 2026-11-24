@@ -8,9 +8,11 @@
  * dot. Each column also has a plain-words label for screen readers. The
  * whole strip is labelled "This week" unless you pass another label. With
  * onOpenRun, a day that has a run (done, or an extra one) is tappable and
- * hands that run over, so the app can open its page.
+ * hands that run over, so the app can open its page. Race day (from the plan
+ * settings) says "Race" where the miles go, unless a run was logged that day.
  */
 import type { IsoDate, Run } from '../engine/types'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { dateOfDay, type PlannedRow } from '../plan/weekMatch'
 import { formatDate, formatMiles } from './format'
 
@@ -38,81 +40,95 @@ export const WeekStrip = ({
   today: IsoDate
   stripLabel?: string
   onOpenRun?: (run: Run) => void
-}) => (
-  <div className="week-strip" role="group" aria-label={stripLabel}>
-    {DAY_NAMES.map((dayName, dayIndex) => {
-      const date = dateOfDay(weekStart, dayIndex)
-      const name = formatDate(date)
-      const row = rows.find((candidate) => candidate.dayIndex === dayIndex)
-      const extra = extraRuns.filter((candidate) => candidate.date === date)
-      const extraMiles = extra.reduce((sum, item) => sum + item.miles, 0)
+}) => {
+  const { raceDate } = usePlanSettings()
+  return (
+    <div className="week-strip" role="group" aria-label={stripLabel}>
+      {DAY_NAMES.map((dayName, dayIndex) => {
+        const date = dateOfDay(weekStart, dayIndex)
+        const name = formatDate(date)
+        const row = rows.find((candidate) => candidate.dayIndex === dayIndex)
+        const extra = extraRuns.filter((candidate) => candidate.date === date)
+        const extraMiles = extra.reduce((sum, item) => sum + item.miles, 0)
 
-      let label = `${name}: no run planned`
-      let dot: string | undefined
-      let miles: string | undefined
-      if (row) {
-        label = describeRow(name, row)
-        dot =
-          row.status === 'done'
-            ? 'done'
-            : row.status === 'missed'
-              ? 'missed'
-              : row.workout.kind
-        miles =
-          row.status === 'done' && row.run
-            ? `✓ ${formatMiles(row.run.miles)}`
-            : formatMiles(row.workout.miles)
-      } else if (extra.length > 0) {
-        label = `${name}: extra run, ${formatMiles(extraMiles)} miles`
-        dot = 'extra'
-        miles = formatMiles(extraMiles)
-      }
+        let label = `${name}: no run planned`
+        let dot: string | undefined
+        let miles: string | undefined
+        if (row) {
+          label = describeRow(name, row)
+          dot =
+            row.status === 'done'
+              ? 'done'
+              : row.status === 'missed'
+                ? 'missed'
+                : row.workout.kind
+          miles =
+            row.status === 'done' && row.run
+              ? `✓ ${formatMiles(row.run.miles)}`
+              : formatMiles(row.workout.miles)
+        } else if (extra.length > 0) {
+          label = `${name}: extra run, ${formatMiles(extraMiles)} miles`
+          dot = 'extra'
+          miles = formatMiles(extraMiles)
+        }
 
-      const classes = [
-        'day',
-        date === today ? 'today' : '',
-        row?.status === 'missed' ? 'missed' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')
+        // Race day says so; a run logged that day (the race itself, say) stays.
+        const isRace = date === raceDate
+        if (isRace) {
+          if (dot) label = `${label}, race day`
+          else {
+            label = `${name}: race day`
+            miles = 'Race'
+          }
+        }
 
-      const content = (
-        <>
-          <span className="day-name">{dayName.toUpperCase()}</span>
-          <span className="day-date">{Number(date.slice(8))}</span>
-          {dot ? (
-            <span className={`dot dot-${dot}`} />
-          ) : (
-            <span className="dot-space" />
-          )}
-          <span className="day-miles">{miles}</span>
-        </>
-      )
-      const openable =
-        onOpenRun && (row?.run ?? (extra.length > 0 ? extra[0] : undefined))
+        const classes = [
+          'day',
+          date === today ? 'today' : '',
+          isRace ? 'race' : '',
+          row?.status === 'missed' ? 'missed' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')
 
-      return (
-        <div
-          key={date}
-          className={classes}
-          role="group"
-          aria-label={label}
-          aria-current={date === today ? 'date' : undefined}
-        >
-          {openable ? (
-            <button
-              type="button"
-              className="day-hit"
-              aria-label={`Run details for ${name}`}
-              onClick={() => onOpenRun?.(openable)}
-            >
-              {content}
-            </button>
-          ) : (
-            content
-          )}
-        </div>
-      )
-    })}
-  </div>
-)
+        const content = (
+          <>
+            <span className="day-name">{dayName.toUpperCase()}</span>
+            <span className="day-date">{Number(date.slice(8))}</span>
+            {dot ? (
+              <span className={`dot dot-${dot}`} />
+            ) : (
+              <span className="dot-space" />
+            )}
+            <span className="day-miles">{miles}</span>
+          </>
+        )
+        const openable =
+          onOpenRun && (row?.run ?? (extra.length > 0 ? extra[0] : undefined))
+
+        return (
+          <div
+            key={date}
+            className={classes}
+            role="group"
+            aria-label={label}
+            aria-current={date === today ? 'date' : undefined}
+          >
+            {openable ? (
+              <button
+                type="button"
+                className="day-hit"
+                aria-label={`Run details for ${name}`}
+                onClick={() => onOpenRun?.(openable)}
+              >
+                {content}
+              </button>
+            ) : (
+              content
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}

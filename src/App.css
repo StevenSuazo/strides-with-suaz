@@ -194,6 +194,12 @@ details > form {
   color: var(--missed-text);
 }
 
+.week-strip .race .day-miles {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* Coloured dots for run types: shared by the week strip and the run list */
 .dot {
   flex: none;
