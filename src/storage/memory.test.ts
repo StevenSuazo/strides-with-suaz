@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type {
   CheckIn,
   GateState,
+  PlanSetup,
   Run,
   WeekAvailability,
   WeekResult,
@@ -35,6 +36,15 @@ const checkIn = (
   feel: 'good',
   entries: [{ area: 'knee', side: 'left', pain: 2 }],
   kind: 'afterRun',
+  ...overrides,
+})
+
+const plan = (overrides: Partial<PlanSetup> = {}): PlanSetup => ({
+  startDate: '2026-11-09',
+  raceDate: '2027-03-21',
+  startMiles: 8.5,
+  peakMiles: 22,
+  startLongRunMiles: 4,
   ...overrides,
 })
 
@@ -518,5 +528,49 @@ describe('overrides', () => {
     const storage = createMemoryStorage()
     await storage.deleteOverride('nope')
     expect(await storage.getOverrides()).toEqual({})
+  })
+})
+
+describe('plan setup', () => {
+  it('is undefined before anything is saved', async () => {
+    expect(await createMemoryStorage().getPlanSetup()).toBeUndefined()
+  })
+
+  it('saves a plan and reads it back', async () => {
+    const storage = createMemoryStorage()
+    await storage.savePlanSetup(plan())
+    expect(await storage.getPlanSetup()).toEqual(plan())
+  })
+
+  it('replaces the earlier plan', async () => {
+    const storage = createMemoryStorage()
+    await storage.savePlanSetup(plan())
+    await storage.savePlanSetup(plan({ peakMiles: 25 }))
+    expect((await storage.getPlanSetup())?.peakMiles).toBe(25)
+  })
+
+  it('hands back a copy', async () => {
+    const storage = createMemoryStorage()
+    await storage.savePlanSetup(plan())
+    const read = await storage.getPlanSetup()
+    read!.peakMiles = 99
+    expect((await storage.getPlanSetup())?.peakMiles).toBe(22)
+  })
+
+  it.each([
+    ['a start that is not a Monday', { startDate: '2026-11-10' }],
+    ['a race that is not a Sunday', { raceDate: '2027-03-20' }],
+    ['a race on or before the start', { raceDate: '2026-11-08' }],
+    ['a date that does not exist', { startDate: '2026-02-30' }],
+    ['zero starting miles', { startMiles: 0 }],
+    ['a peak at or below the start', { peakMiles: 8.5 }],
+    ['a peak that is not a number', { peakMiles: Number.NaN }],
+    ['zero starting long run', { startLongRunMiles: 0 }],
+  ])('rejects %s and stores nothing', async (_name, change) => {
+    const storage = createMemoryStorage()
+    await expect(storage.savePlanSetup(plan(change))).rejects.toThrow(
+      RangeError,
+    )
+    expect(await storage.getPlanSetup()).toBeUndefined()
   })
 })

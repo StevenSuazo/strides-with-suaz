@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type {
   CheckIn,
   GateState,
+  PlanSetup,
   Run,
   WeekAvailability,
   WeekResult,
@@ -11,9 +12,11 @@ import {
   checkInToRow,
   gateStateToRow,
   overrideToRow,
+  planSetupToRow,
   rowToAvailability,
   rowToCheckIn,
   rowToGateState,
+  rowToPlanSetup,
   rowToRun,
   rowToWeekResult,
   rowsToOverrides,
@@ -273,5 +276,36 @@ describe('overrides', () => {
 
   it('gives an empty record for no rows', () => {
     expect(rowsToOverrides([])).toEqual({})
+  })
+})
+
+describe('plan setup', () => {
+  const setup: PlanSetup = {
+    startDate: '2026-11-09',
+    raceDate: '2027-03-21',
+    startMiles: 8.5,
+    peakMiles: 22,
+    startLongRunMiles: 4,
+  }
+
+  it('writes snake_case columns and leaves user_id out', () => {
+    expect(planSetupToRow(setup)).toEqual({
+      start_date: '2026-11-09',
+      race_date: '2027-03-21',
+      start_miles: 8.5,
+      peak_miles: 22,
+      start_long_run_miles: 4,
+    })
+  })
+
+  it('round-trips through a row', () => {
+    expect(rowToPlanSetup({ user_id: 'u1', ...planSetupToRow(setup) })).toEqual(
+      setup,
+    )
+  })
+
+  it('rejects a row whose numbers break the plan rules', () => {
+    const row = { user_id: 'u1', ...planSetupToRow(setup) }
+    expect(() => rowToPlanSetup({ ...row, peak_miles: 1 })).toThrow(RangeError)
   })
 })

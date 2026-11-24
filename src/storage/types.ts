@@ -15,6 +15,7 @@
 import type {
   CheckIn,
   GateState,
+  PlanSetup,
   Run,
   WeekAvailability,
   WeekResult,
@@ -28,6 +29,9 @@ export type AppStorage = {
 
   getGateState: () => Promise<GateState | undefined>
   saveGateState: (state: GateState) => Promise<void>
+
+  getPlanSetup: () => Promise<PlanSetup | undefined> // undefined: not set up yet
+  savePlanSetup: (setup: PlanSetup) => Promise<void>
 
   getAvailability: (weekIndex: number) => Promise<WeekAvailability | undefined>
   saveAvailability: (

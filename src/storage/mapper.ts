@@ -15,17 +15,19 @@ import type {
   CheckIn,
   CheckInEntry,
   GateState,
+  PlanSetup,
   Run,
   WeekAvailability,
   WeekResult,
 } from '../engine/types'
-import { checkAvailability, checkWeekResult } from './validate'
+import { checkAvailability, checkPlanSetup, checkWeekResult } from './validate'
 
 type Tables = Database['public']['Tables']
 
 export type WeekResultRow = Tables['week_results']['Row']
 export type GateStateRow = Tables['gate_state']['Row']
 export type AvailabilityRow = Tables['week_availability']['Row']
+export type PlanSetupRow = Tables['plan_settings']['Row']
 export type RunRow = Tables['runs']['Row']
 export type CheckInRow = Tables['check_ins']['Row']
 export type OverrideRow = Tables['overrides']['Row']
@@ -163,3 +165,25 @@ export const overrideToRow = (
 
 export const rowsToOverrides = (rows: OverrideRow[]): Record<string, string> =>
   Object.fromEntries(rows.map((row) => [row.run_id, row.workout_id]))
+
+export const planSetupToRow = (
+  setup: PlanSetup,
+): Omit<PlanSetupRow, 'user_id'> => ({
+  start_date: setup.startDate,
+  race_date: setup.raceDate,
+  start_miles: setup.startMiles,
+  peak_miles: setup.peakMiles,
+  start_long_run_miles: setup.startLongRunMiles,
+})
+
+export const rowToPlanSetup = (row: PlanSetupRow): PlanSetup => {
+  const setup = {
+    startDate: row.start_date,
+    raceDate: row.race_date,
+    startMiles: row.start_miles,
+    peakMiles: row.peak_miles,
+    startLongRunMiles: row.start_long_run_miles,
+  }
+  checkPlanSetup(setup)
+  return setup
+}

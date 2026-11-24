@@ -7,6 +7,7 @@
 import type {
   CheckIn,
   GateState,
+  PlanSetup,
   Run,
   WeekAvailability,
   WeekResult,
@@ -129,4 +130,39 @@ export const checkCheckIn = (checkIn: CheckIn): void => {
 export const checkOverride = (runId: string, workoutId: string): void => {
   nonEmpty('override run id', runId)
   nonEmpty('override workout id', workoutId)
+}
+
+const weekday = (name: string, value: string, day: number, label: string) => {
+  if (new Date(`${value}T00:00:00Z`).getUTCDay() !== day) {
+    fail(`${name} must be a ${label}, got ${value}`)
+  }
+}
+
+export const checkPlanSetup = (setup: PlanSetup): void => {
+  isoDate('plan start date', setup.startDate)
+  isoDate('plan race date', setup.raceDate)
+  weekday('plan start date', setup.startDate, 1, 'Monday')
+  weekday('plan race date', setup.raceDate, 0, 'Sunday')
+  if (setup.raceDate <= setup.startDate) {
+    fail('plan race date must be after the start date')
+  }
+  if (!Number.isFinite(setup.startMiles) || setup.startMiles <= 0) {
+    fail(`plan start miles must be more than 0, got ${setup.startMiles}`)
+  }
+  if (
+    !Number.isFinite(setup.peakMiles) ||
+    setup.peakMiles <= setup.startMiles
+  ) {
+    fail(
+      `plan peak miles must be more than the start miles, got ${setup.peakMiles}`,
+    )
+  }
+  if (
+    !Number.isFinite(setup.startLongRunMiles) ||
+    setup.startLongRunMiles <= 0
+  ) {
+    fail(
+      `plan start long run must be more than 0, got ${setup.startLongRunMiles}`,
+    )
+  }
 }
