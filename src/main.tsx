@@ -7,6 +7,8 @@ import { AuthProvider } from './auth/AuthProvider'
 import { LoginGate } from './auth/LoginGate'
 import { createSupabaseAuth } from './auth/supabase'
 import { registerServiceWorker } from './pwa/register'
+import { PlanGate } from './screens/PlanGate'
+import { PlanSettingsCard } from './screens/PlanSettingsCard'
 import { SupabaseStorageProvider } from './storage/SupabaseStorageProvider'
 
 const auth = createSupabaseAuth()
@@ -22,7 +24,16 @@ createRoot(document.getElementById('root')!).render(
     <AuthProvider auth={auth}>
       <LoginGate>
         <SupabaseStorageProvider>
-          <App account={<AccountCard />} />
+          <PlanGate>
+            <App
+              account={
+                <>
+                  <PlanSettingsCard />
+                  <AccountCard />
+                </>
+              }
+            />
+          </PlanGate>
         </SupabaseStorageProvider>
       </LoginGate>
     </AuthProvider>
