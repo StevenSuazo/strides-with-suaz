@@ -9,6 +9,7 @@
 import type {
   CheckIn,
   GateState,
+  PlanSetup,
   Run,
   WeekAvailability,
   WeekResult,
@@ -18,6 +19,7 @@ import {
   checkAvailability,
   checkCheckIn,
   checkGateState,
+  checkPlanSetup,
   checkOverride,
   checkRun,
   checkWeekIndex,
@@ -38,6 +40,7 @@ export const createMemoryStorage: () => AppStorage = () => {
   const checkIns = new Map<string, CheckIn>()
   const overrides: Overrides = {}
   let gateState: GateState | undefined
+  let planSetup: PlanSetup | undefined
 
   return {
     getWeekResults: async () =>
@@ -51,6 +54,12 @@ export const createMemoryStorage: () => AppStorage = () => {
     saveGateState: async (state) => {
       checkGateState(state)
       gateState = copy(state)
+    },
+
+    getPlanSetup: async () => (planSetup ? copy(planSetup) : undefined),
+    savePlanSetup: async (setup) => {
+      checkPlanSetup(setup)
+      planSetup = copy(setup)
     },
 
     getAvailability: async (weekIndex) => {

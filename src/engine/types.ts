@@ -171,3 +171,15 @@ export type CheckIn = {
   note?: string
   kind: 'afterRun' | 'nextMorning'
 }
+
+/**
+ * The numbers a plan is built from, as saved for one person. Total weeks is
+ * not here: it follows from the two dates (see totalWeeksBetween).
+ */
+export type PlanSetup = {
+  startDate: IsoDate // a Monday
+  raceDate: IsoDate // the Sunday that ends the last week
+  startMiles: number
+  peakMiles: number
+  startLongRunMiles: number
+}

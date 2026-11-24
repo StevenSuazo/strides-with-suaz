@@ -15,9 +15,11 @@ import {
   checkInToRow,
   gateStateToRow,
   overrideToRow,
+  planSetupToRow,
   rowToAvailability,
   rowToCheckIn,
   rowToGateState,
+  rowToPlanSetup,
   rowToRun,
   rowToWeekResult,
   rowsToOverrides,
@@ -29,6 +31,7 @@ import {
   checkAvailability,
   checkCheckIn,
   checkGateState,
+  checkPlanSetup,
   checkOverride,
   checkRun,
   checkWeekIndex,
@@ -70,6 +73,22 @@ export const createSupabaseStorage: (
     const { error } = await client
       .from('gate_state')
       .upsert(gateStateToRow(state), { onConflict: 'user_id' })
+    if (error) throw storageError(error)
+  },
+
+  getPlanSetup: async () => {
+    const { data, error } = await client
+      .from('plan_settings')
+      .select('*')
+      .maybeSingle()
+    if (error) throw storageError(error)
+    return data ? rowToPlanSetup(data) : undefined
+  },
+  savePlanSetup: async (setup) => {
+    checkPlanSetup(setup)
+    const { error } = await client
+      .from('plan_settings')
+      .upsert(planSetupToRow(setup), { onConflict: 'user_id' })
     if (error) throw storageError(error)
   },
 

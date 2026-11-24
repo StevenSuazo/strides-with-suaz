@@ -117,6 +117,33 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_settings: {
+        Row: {
+          peak_miles: number
+          race_date: string
+          start_date: string
+          start_long_run_miles: number
+          start_miles: number
+          user_id: string
+        }
+        Insert: {
+          peak_miles: number
+          race_date: string
+          start_date: string
+          start_long_run_miles: number
+          start_miles: number
+          user_id?: string
+        }
+        Update: {
+          peak_miles?: number
+          race_date?: string
+          start_date?: string
+          start_long_run_miles?: number
+          start_miles?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       runs: {
         Row: {
           avg_heart_rate: number | null
