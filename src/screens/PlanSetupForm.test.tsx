@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { PlanSetup } from '../engine/types'
+import type { RaceChoice } from '../races/search'
 import { PlanSetupForm } from './PlanSetupForm'
 
 const mine: PlanSetup = {
@@ -175,5 +176,92 @@ describe('PlanSetupForm: changing a saved plan', () => {
     })
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(cancelled).toBe(true)
+  })
+})
+
+describe('PlanSetupForm: finding a race', () => {
+  const nyc: RaceChoice = {
+    id: '1',
+    name: '2027 United Airlines NYC Half Marathon',
+    city: 'Brooklyn',
+    state: 'NY',
+    date: '2027-03-21',
+    url: 'https://runsignup.com/Race/1',
+  }
+  const later: RaceChoice = {
+    ...nyc,
+    id: '2',
+    name: 'August Half',
+    date: '2027-08-15',
+  }
+
+  const find = async (
+    user: ReturnType<typeof userEvent.setup>,
+    race: RaceChoice,
+  ) => {
+    await user.type(screen.getByLabelText('Find a half marathon'), 'half')
+    await user.click(screen.getByRole('button', { name: 'Search' }))
+    await user.click(
+      await screen.findByRole('button', { name: new RegExp(race.name) }),
+    )
+  }
+
+  it('fills in the race date from the race that was picked', async () => {
+    const { user } = setup({ searchRaces: async () => [nyc] })
+    await find(user, nyc)
+    expect(race().value).toBe('2027-03-21')
+    expect(screen.getByText(`Racing: ${nyc.name}`)).toBeInTheDocument()
+  })
+
+  it('suggests a start that gives about 19 weeks, when the start is untouched', async () => {
+    const { user } = setup({ searchRaces: async () => [later] })
+    await find(user, later)
+    expect(start().value).toBe('2027-04-05') // 19 weeks ending in race week
+  })
+
+  it('starts on the coming Monday when 19 weeks are no longer possible', async () => {
+    const { user } = setup({ searchRaces: async () => [nyc] })
+    await find(user, nyc)
+    expect(start().value).toBe('2026-11-30') // today is Tue Nov 24
+  })
+
+  it('keeps a start date that was chosen by hand', async () => {
+    const { user } = setup({ searchRaces: async () => [later] })
+    fireEvent.change(start(), { target: { value: '2027-01-04' } })
+    await find(user, later)
+    expect(start().value).toBe('2027-01-04')
+    expect(race().value).toBe('2027-08-15')
+  })
+
+  it('leaves the saved start alone when changing a saved plan', async () => {
+    const { user } = setup({ initial: mine, searchRaces: async () => [later] })
+    await find(user, later)
+    expect(start().value).toBe('2026-11-09')
+    expect(race().value).toBe('2027-08-15')
+  })
+
+  it('saves a plan made from a picked race', async () => {
+    const { saved, user } = setup({ searchRaces: async () => [nyc] })
+    await find(user, nyc)
+    await user.type(startMiles(), '8.5')
+    await user.type(peak(), '22')
+    await user.type(longRun(), '4')
+    await user.click(save())
+    expect(saved).toEqual([
+      { ...mine, startDate: '2026-11-30', raceDate: '2027-03-21' },
+    ])
+  })
+
+  it('forgets the race name when the date is changed by hand', async () => {
+    const { user } = setup({ searchRaces: async () => [nyc] })
+    await find(user, nyc)
+    fireEvent.change(race(), { target: { value: '2027-03-28' } })
+    expect(screen.queryByText(/Racing:/)).not.toBeInTheDocument()
+  })
+
+  it('does not save the plan when a race is searched for', async () => {
+    const { saved, user } = setup({ searchRaces: async () => [nyc] })
+    await user.type(screen.getByLabelText('Find a half marathon'), 'nyc{Enter}')
+    expect(saved).toEqual([])
   })
 })

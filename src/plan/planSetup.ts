@@ -2,6 +2,7 @@
  * planSetup.ts: helpers for the plan setup form.
  *
  * - weekdayName(date): 'Saturday' and so on.
+ * - suggestStart(today, raceDate): the start date to suggest for a race.
  * - mondayOnOrAfter(date): the date itself if it is a Monday, else the next
  *   Monday. The form suggests it as the plan start.
  * - readPlanDraft(draft): reads the form's text boxes. It returns
@@ -50,6 +51,27 @@ const DAY_NAMES = [
 ]
 
 export const weekdayName = (date: IsoDate): string => DAY_NAMES[weekday(date)]
+
+const addDays = (date: IsoDate, days: number): IsoDate =>
+  new Date(dayOf(date) + days * MS_PER_DAY).toISOString().slice(0, 10)
+
+const mondayOnOrBefore = (date: IsoDate): IsoDate =>
+  addDays(date, -((weekday(date) + 6) % 7))
+
+/**
+ * A start date for a race: the Monday that makes a 19-week plan ending in the
+ * race's week, or the coming Monday if that has already passed (a shorter
+ * plan). Always a Monday.
+ */
+export const suggestStart = (
+  today: IsoDate,
+  raceDate: IsoDate,
+  weeks = 19,
+): IsoDate => {
+  const ideal = addDays(mondayOnOrBefore(raceDate), -(weeks - 1) * 7)
+  const earliest = mondayOnOrAfter(today)
+  return ideal >= earliest ? ideal : earliest
+}
 
 export const mondayOnOrAfter = (date: IsoDate): IsoDate => {
   const daysAhead = (8 - weekday(date)) % 7

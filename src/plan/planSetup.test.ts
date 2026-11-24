@@ -3,6 +3,7 @@ import { checkPlanSetup } from '../storage/validate'
 import {
   mondayOnOrAfter,
   readPlanDraft,
+  suggestStart,
   weekdayName,
   type PlanDraft,
 } from './planSetup'
@@ -104,5 +105,32 @@ describe('weekdayName', () => {
     expect(weekdayName('2027-03-21')).toBe('Sunday')
     expect(weekdayName('2027-03-20')).toBe('Saturday')
     expect(weekdayName('2026-11-09')).toBe('Monday')
+  })
+})
+
+describe('suggestStart', () => {
+  it('aims for a 19-week plan when there is room', () => {
+    // Race Sun Aug 15, 2027: its week starts Aug 9, 18 weeks after Apr 5.
+    expect(suggestStart('2026-11-24', '2027-08-15')).toBe('2027-04-05')
+  })
+
+  it('starts on the coming Monday when 19 weeks would already have begun', () => {
+    // Race Sun Mar 21, 2027 would want Nov 9, but today is Tue Nov 24.
+    expect(suggestStart('2026-11-24', '2027-03-21')).toBe('2026-11-30')
+  })
+
+  it('counts from the Monday of the race week, whatever day the race is', () => {
+    expect(suggestStart('2026-11-24', '2027-08-09')).toBe('2027-04-05') // Monday
+    expect(suggestStart('2026-11-24', '2027-08-12')).toBe('2027-04-05') // Thursday
+  })
+
+  it('starts today when today is a Monday that is not too early', () => {
+    expect(suggestStart('2026-11-23', '2027-03-21')).toBe('2026-11-23')
+  })
+
+  it('always gives a Monday', () => {
+    for (const race of ['2027-02-01', '2027-04-18', '2027-10-03']) {
+      expect(weekdayName(suggestStart('2026-11-24', race))).toBe('Monday')
+    }
   })
 })

@@ -46,8 +46,8 @@ export const PlanGate = ({
       <section className="card">
         <h2>Set up your plan</h2>
         <p className="muted">
-          Pick your start date, race date and weekly miles. You can change these
-          later under More.
+          Search for your race, or enter the dates yourself, then set your
+          weekly miles. You can change these later under More.
         </p>
         <PlanSetupForm today={today} onSave={save} />
       </section>
