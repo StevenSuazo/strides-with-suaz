@@ -582,6 +582,33 @@ button.link {
   border: 0;
 }
 
+/* Race search on the plan setup form */
+.race-results {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.race-results button {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+}
+
+.race-results .muted {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.race-search {
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
 /* Run page */
 .run-page h3:first-child {
   margin-top: 0;
