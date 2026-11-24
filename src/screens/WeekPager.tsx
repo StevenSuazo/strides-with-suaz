@@ -103,7 +103,7 @@ export const WeekPager = ({
           <Label text="Next week · projected" start={nextStart} />
           <WeekStrip
             weekStart={nextStart}
-            rows={projectedRows(next, nextStart)}
+            rows={projectedRows(next, nextStart, settings)}
             extraRuns={[]}
             today={today}
             stripLabel="Next week, projected"

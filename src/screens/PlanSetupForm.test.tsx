@@ -68,7 +68,20 @@ describe('PlanSetupForm: a new plan', () => {
   it('shows how many weeks the plan is', async () => {
     const { user } = setup()
     await fillAll(user)
-    expect(screen.getByText('That’s a 19-week plan.')).toBeInTheDocument()
+    expect(
+      screen.getByText('That’s a 19-week plan. Race day is Sunday.'),
+    ).toBeInTheDocument()
+  })
+
+  it('takes a race on any day and says which day it is', async () => {
+    const { saved, user } = setup()
+    await fillAll(user)
+    fireEvent.change(race(), { target: { value: '2027-03-20' } })
+    expect(
+      screen.getByText('That’s a 19-week plan. Race day is Saturday.'),
+    ).toBeInTheDocument()
+    await user.click(save())
+    expect(saved[0].raceDate).toBe('2027-03-20')
   })
 
   it('saves the numbers as a plan', async () => {
@@ -80,7 +93,7 @@ describe('PlanSetupForm: a new plan', () => {
 
   it.each([
     ['a start that is not a Monday', () => start(), '2026-11-10', /Monday/],
-    ['a race that is not a Sunday', () => race(), '2027-03-20', /Sunday/],
+    ['a race under 8 weeks out', () => race(), '2026-12-27', /8 weeks/],
   ])('explains %s and blocks saving', async (_n, field, value, message) => {
     const { user } = setup()
     await fillAll(user)

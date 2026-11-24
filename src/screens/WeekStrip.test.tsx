@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { PlannedRun, Run } from '../engine/types'
+import { PlanSettingsProvider } from '../plan/PlanSettingsProvider'
+import { PLAN } from '../plan/settings'
 import { matchWeek } from '../plan/weekMatch'
 import { WeekStrip } from './WeekStrip'
 
@@ -157,5 +159,70 @@ describe('WeekStrip: opening a run', () => {
   it('has no buttons at all without a handler', () => {
     show([run('r1', '2026-11-16', 2.4)])
     expect(screen.queryAllByRole('button')).toEqual([])
+  })
+})
+
+describe('WeekStrip: race day', () => {
+  // Race week of the built-in plan: Mon Mar 15 to Sun Mar 21, 2027.
+  const showRaceWeek = (
+    runs: Run[] = [],
+    raceDate = PLAN.raceDate,
+    weekStart = '2027-03-15',
+  ) => {
+    const { rows, extraRuns } = matchWeek({
+      weekIndex: 19,
+      weekStart,
+      planned: [], // nothing planned, so a logged run stays an extra one
+      runs,
+      overrides: {},
+      today: '2027-03-15',
+    })
+    return render(
+      <PlanSettingsProvider plan={{ ...PLAN, raceDate }}>
+        <WeekStrip
+          weekStart={weekStart}
+          rows={rows}
+          extraRuns={extraRuns}
+          today="2027-03-15"
+        />
+      </PlanSettingsProvider>,
+    )
+  }
+
+  it('marks race day, with the word Race and a plain-words label', () => {
+    showRaceWeek()
+    const day = screen.getByRole('group', { name: 'Sun, Mar 21: race day' })
+    expect(day).toHaveTextContent('Race')
+    expect(day).toHaveClass('race')
+  })
+
+  it('marks a race on any day of the week', () => {
+    showRaceWeek([], '2027-03-19')
+    expect(
+      screen.getByRole('group', { name: 'Fri, Mar 19: race day' }),
+    ).toHaveTextContent('Race')
+    expect(
+      screen.getByRole('group', { name: 'Sun, Mar 21: no run planned' }),
+    ).not.toHaveTextContent('Race')
+  })
+
+  it('shows only one race day', () => {
+    showRaceWeek()
+    expect(screen.getAllByText('Race')).toHaveLength(1)
+  })
+
+  it('keeps a run logged on race day, and still says it is race day', () => {
+    showRaceWeek([run('r1', '2027-03-21', 13.1)])
+    const day = screen.getByRole('group', {
+      name: 'Sun, Mar 21: extra run, 13.1 miles, race day',
+    })
+    expect(day).toHaveTextContent('13.1')
+    expect(day).not.toHaveTextContent('Race')
+    expect(day).toHaveClass('race')
+  })
+
+  it('marks nothing in a week that is not race week', () => {
+    showRaceWeek([], PLAN.raceDate, '2027-03-08')
+    expect(screen.queryByText('Race')).not.toBeInTheDocument()
   })
 })

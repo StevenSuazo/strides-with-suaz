@@ -4,6 +4,7 @@
  * Each function throws a RangeError naming the field, so bad data never
  * reaches the store. The in-memory and Supabase versions both call these.
  */
+import { weekIndexForDate } from '../engine/dates'
 import type {
   CheckIn,
   GateState,
@@ -132,6 +133,9 @@ export const checkOverride = (runId: string, workoutId: string): void => {
   nonEmpty('override workout id', workoutId)
 }
 
+/** The shortest plan allowed: weeks from the start to the race's week. */
+export const MIN_PLAN_WEEKS = 8
+
 const weekday = (name: string, value: string, day: number, label: string) => {
   if (new Date(`${value}T00:00:00Z`).getUTCDay() !== day) {
     fail(`${name} must be a ${label}, got ${value}`)
@@ -142,9 +146,14 @@ export const checkPlanSetup = (setup: PlanSetup): void => {
   isoDate('plan start date', setup.startDate)
   isoDate('plan race date', setup.raceDate)
   weekday('plan start date', setup.startDate, 1, 'Monday')
-  weekday('plan race date', setup.raceDate, 0, 'Sunday')
   if (setup.raceDate <= setup.startDate) {
     fail('plan race date must be after the start date')
+  }
+  const weeks = weekIndexForDate(setup.raceDate, setup.startDate)
+  if (weeks < MIN_PLAN_WEEKS) {
+    fail(
+      `plan must be at least ${MIN_PLAN_WEEKS} weeks from start to race, got ${weeks}`,
+    )
   }
   if (!Number.isFinite(setup.startMiles) || setup.startMiles <= 0) {
     fail(`plan start miles must be more than 0, got ${setup.startMiles}`)

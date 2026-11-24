@@ -1,12 +1,14 @@
 /**
  * PlanSetupForm.tsx: sets up a training plan, or changes a saved one.
  *
- * Boxes: start date (a Monday), race date (a Sunday), starting weekly miles,
+ * Boxes: start date (a Monday), race date (any day, at least 8 weeks out),
+ * starting weekly miles,
  * peak weekly miles and starting long run. A new plan suggests the next Monday
  * as the start and leaves everything else blank; pass `initial` to edit a
  * saved plan. Checks run as you type (readPlanDraft); a box left empty is not
  * a complaint, but Save stays off until all five are valid. When the dates are
- * valid it shows how many weeks the plan is. Editing adds a note that moving
+ * valid it shows how many weeks the plan is and which day the race is on.
+ * Editing adds a note that moving
  * the dates can shift past weeks. It does not touch storage: the parent saves
  * through onSave, and a failed save shows its message here.
  */
@@ -15,6 +17,7 @@ import type { IsoDate, PlanSetup } from '../engine/types'
 import {
   mondayOnOrAfter,
   readPlanDraft,
+  weekdayName,
   type PlanDraft,
 } from '../plan/planSetup'
 import { planFromSetup } from '../plan/settings'
@@ -90,7 +93,9 @@ export const PlanSetupForm = ({
         value={draft.raceDate}
         onChange={(event) => change('raceDate', event.target.value)}
       />
-      {setup && <p>That’s a {planFromSetup(setup).totalWeeks}-week plan.</p>}
+      {setup && (
+        <p>{`That’s a ${planFromSetup(setup).totalWeeks}-week plan. Race day is ${weekdayName(setup.raceDate)}.`}</p>
+      )}
       <label htmlFor={`${id}-start-miles`}>Starting weekly miles</label>
       <input
         id={`${id}-start-miles`}
