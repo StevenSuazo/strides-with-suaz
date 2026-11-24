@@ -100,6 +100,7 @@ const ProjectedWeek = ({
   today: IsoDate
   thisWeekMiles?: number
 }) => {
+  const settings = usePlanSettings()
   const [open, setOpen] = useState(false)
   return (
     <div className="calendar-week calendar-projected">
@@ -122,7 +123,7 @@ const ProjectedWeek = ({
         <>
           <WeekStrip
             weekStart={weekStart}
-            rows={projectedRows(target, weekStart)}
+            rows={projectedRows(target, weekStart, settings)}
             extraRuns={[]}
             today={today}
             stripLabel={`Week ${target.weekIndex}, projected`}

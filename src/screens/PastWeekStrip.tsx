@@ -16,6 +16,7 @@ import type {
   WeekAvailability,
   WeekTarget,
 } from '../engine/types'
+import { raceWeekAvailability } from '../plan/raceWeek'
 import { usePlanSettings } from '../plan/usePlanSettings'
 import { matchWeek } from '../plan/weekMatch'
 import { useStorage } from '../storage/useStorage'
@@ -44,7 +45,8 @@ export const PastWeekStrip = ({
   stripLabel?: string
 }) => {
   const storage = useStorage()
-  const { startDate } = usePlanSettings()
+  const settings = usePlanSettings()
+  const { startDate } = settings
   const [loaded, setLoaded] = useState<Loaded>()
   const [error, setError] = useState<string>()
 
@@ -70,7 +72,10 @@ export const PastWeekStrip = ({
   const { rows, extraRuns } = matchWeek({
     weekIndex,
     weekStart,
-    planned: placeRuns(target, loaded.availability).runs,
+    planned: placeRuns(
+      target,
+      raceWeekAvailability(loaded.availability, weekIndex, settings),
+    ).runs,
     runs,
     overrides: loaded.overrides,
     today,

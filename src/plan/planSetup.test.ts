@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { checkPlanSetup } from '../storage/validate'
-import { mondayOnOrAfter, readPlanDraft, type PlanDraft } from './planSetup'
+import {
+  mondayOnOrAfter,
+  readPlanDraft,
+  weekdayName,
+  type PlanDraft,
+} from './planSetup'
 
 const draft = (change: Partial<PlanDraft> = {}): PlanDraft => ({
   startDate: '2026-11-09',
@@ -36,6 +41,12 @@ describe('readPlanDraft', () => {
     })
   })
 
+  it('allows a race on any day of the week', () => {
+    for (const raceDate of ['2027-03-15', '2027-03-17', '2027-03-20']) {
+      expect('setup' in readPlanDraft(draft({ raceDate }))).toBe(true)
+    }
+  })
+
   it('is just incomplete, with no complaint, while a box is still empty', () => {
     expect(readPlanDraft(draft({ raceDate: '' }))).toEqual({})
     expect(readPlanDraft(draft({ peakMiles: '' }))).toEqual({})
@@ -44,7 +55,11 @@ describe('readPlanDraft', () => {
 
   it.each([
     ['a start that is not a Monday', { startDate: '2026-11-10' }, /Monday/],
-    ['a race that is not a Sunday', { raceDate: '2027-03-20' }, /Sunday/],
+    [
+      'a race less than 8 weeks out',
+      { raceDate: '2026-12-27' },
+      /at least 8 weeks/,
+    ],
     ['a race before the start', { raceDate: '2026-11-08' }, /after the start/],
     ['a date that does not exist', { startDate: '2026-02-30' }, /real date/],
     ['zero starting miles', { startMiles: '0' }, /Starting miles/],
@@ -62,6 +77,8 @@ describe('readPlanDraft', () => {
       {},
       { startDate: '2026-11-10' },
       { raceDate: '2027-03-20' },
+      { raceDate: '2026-12-27' },
+      { raceDate: '2026-12-28' },
       { raceDate: '2026-11-08' },
       { startMiles: '0' },
       { peakMiles: '8' },
@@ -79,5 +96,13 @@ describe('readPlanDraft', () => {
       }
       expect('setup' in read, JSON.stringify(change)).toBe(storageAllows)
     }
+  })
+})
+
+describe('weekdayName', () => {
+  it('names the day of the week of a date', () => {
+    expect(weekdayName('2027-03-21')).toBe('Sunday')
+    expect(weekdayName('2027-03-20')).toBe('Saturday')
+    expect(weekdayName('2026-11-09')).toBe('Monday')
   })
 })

@@ -1,10 +1,12 @@
 /**
  * settings.ts: the fixed numbers of this training plan.
  *
- * One person, one plan, so these are constants. Week 1 starts on a Monday and
- * the race falls on the Sunday that ends week 19. startLongRunMiles is week
+ * The built-in plan, also the default when nothing is saved. Week 1 starts on
+ * a Monday and the race falls in the last week (here a Sunday, the end of
+ * week 19). startLongRunMiles is week
  * 1's long run, which the gate then builds on.
  */
+import { weekIndexForDate } from '../engine/dates'
 import type { IsoDate, PlanSetup } from '../engine/types'
 
 export type PlanSettings = {
@@ -16,11 +18,13 @@ export type PlanSettings = {
   startLongRunMiles: number
 }
 
-/** Whole weeks from a Monday start to the Sunday race: 2026-11-09 to 2027-03-21 is 19. */
-export const totalWeeksBetween = (start: IsoDate, race: IsoDate): number => {
-  const day = (date: IsoDate) => Date.parse(`${date}T00:00:00Z`) / 86_400_000
-  return Math.round((day(race) - day(start) + 1) / 7)
-}
+/**
+ * The number of the week the race falls in, counting from a Monday start, so
+ * the plan's length: 2026-11-09 to 2027-03-21 is 19, and so is a race on any
+ * other day of that last week (Mar 15 to 21).
+ */
+export const totalWeeksBetween = (start: IsoDate, race: IsoDate): number =>
+  weekIndexForDate(race, start)
 
 /** A saved setup plus the week count worked out from its dates. */
 export const planFromSetup = (setup: PlanSetup): PlanSettings => ({

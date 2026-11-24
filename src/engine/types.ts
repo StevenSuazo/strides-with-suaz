@@ -178,7 +178,7 @@ export type CheckIn = {
  */
 export type PlanSetup = {
   startDate: IsoDate // a Monday
-  raceDate: IsoDate // the Sunday that ends the last week
+  raceDate: IsoDate // any day; its week is the last week (race week)
   startMiles: number
   peakMiles: number
   startLongRunMiles: number

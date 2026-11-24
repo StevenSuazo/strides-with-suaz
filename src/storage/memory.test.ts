@@ -549,6 +549,21 @@ describe('plan setup', () => {
     expect((await storage.getPlanSetup())?.peakMiles).toBe(25)
   })
 
+  it('accepts a race on any day of the week', async () => {
+    const storage = createMemoryStorage()
+    await storage.savePlanSetup(plan({ raceDate: '2027-03-20' })) // Saturday
+    expect((await storage.getPlanSetup())?.raceDate).toBe('2027-03-20')
+    await storage.savePlanSetup(plan({ raceDate: '2027-03-17' })) // Wednesday
+    expect((await storage.getPlanSetup())?.raceDate).toBe('2027-03-17')
+  })
+
+  it('accepts a race exactly 8 weeks out', async () => {
+    const storage = createMemoryStorage()
+    await storage.savePlanSetup(plan({ raceDate: '2027-01-03' })) // week 8, Sunday
+    await storage.savePlanSetup(plan({ raceDate: '2026-12-28' })) // week 8, Monday
+    expect((await storage.getPlanSetup())?.raceDate).toBe('2026-12-28')
+  })
+
   it('hands back a copy', async () => {
     const storage = createMemoryStorage()
     await storage.savePlanSetup(plan())
@@ -559,7 +574,7 @@ describe('plan setup', () => {
 
   it.each([
     ['a start that is not a Monday', { startDate: '2026-11-10' }],
-    ['a race that is not a Sunday', { raceDate: '2027-03-20' }],
+    ['a race less than 8 weeks out', { raceDate: '2026-12-27' }],
     ['a race on or before the start', { raceDate: '2026-11-08' }],
     ['a date that does not exist', { startDate: '2026-02-30' }],
     ['zero starting miles', { startMiles: 0 }],

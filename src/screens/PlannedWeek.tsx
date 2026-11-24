@@ -18,6 +18,8 @@ import type {
   WeekAvailability,
   WeekTarget,
 } from '../engine/types'
+import { raceWeekAvailability } from '../plan/raceWeek'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { dateOfDay, matchWeek } from '../plan/weekMatch'
 import { formatDate, formatMiles } from './format'
 
@@ -42,8 +44,12 @@ export const PlannedWeek = ({
   onMatch: (workoutId: string, runId: string) => Promise<void>
   onUnmatch: (runId: string) => Promise<void>
 }) => {
+  const settings = usePlanSettings()
   const [error, setError] = useState<string | undefined>()
-  const plan = placeRuns(target, availability)
+  const plan = placeRuns(
+    target,
+    raceWeekAvailability(availability, target.weekIndex, settings),
+  )
   const { rows, extraRuns, weekRuns } = matchWeek({
     weekIndex: target.weekIndex,
     weekStart,

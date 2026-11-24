@@ -1,6 +1,7 @@
 /**
  * planSetup.ts: helpers for the plan setup form.
  *
+ * - weekdayName(date): 'Saturday' and so on.
  * - mondayOnOrAfter(date): the date itself if it is a Monday, else the next
  *   Monday. The form suggests it as the plan start.
  * - readPlanDraft(draft): reads the form's text boxes. It returns
@@ -10,6 +11,8 @@
  *   ones checkPlanSetup enforces in storage, worded for a person.
  */
 import type { IsoDate, PlanSetup } from '../engine/types'
+import { MIN_PLAN_WEEKS } from '../storage/validate'
+import { totalWeeksBetween } from './settings'
 
 const MS_PER_DAY = 86_400_000
 
@@ -35,6 +38,18 @@ const isRealDate = (value: string): boolean => {
 }
 
 const weekday = (date: string): number => new Date(dayOf(date)).getUTCDay()
+
+const DAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+]
+
+export const weekdayName = (date: IsoDate): string => DAY_NAMES[weekday(date)]
 
 export const mondayOnOrAfter = (date: IsoDate): IsoDate => {
   const daysAhead = (8 - weekday(date)) % 7
@@ -66,10 +81,14 @@ export const readPlanDraft = (draft: PlanDraft): DraftReading => {
     problem = 'The start date must be a Monday.'
   } else if (raceFilled && !raceReal) {
     problem = 'The race needs to be a real date.'
-  } else if (raceReal && weekday(raceDate) !== 0) {
-    problem = 'The race date must be a Sunday, the last day of your last week.'
   } else if (startReal && raceReal && raceDate <= startDate) {
     problem = 'The race has to come after the start.'
+  } else if (
+    startReal &&
+    raceReal &&
+    totalWeeksBetween(startDate, raceDate) < MIN_PLAN_WEEKS
+  ) {
+    problem = `The plan needs at least ${MIN_PLAN_WEEKS} weeks from start to race.`
   } else if (!blank(draft.startMiles) && startMiles === undefined) {
     problem = 'Starting miles must be a number above 0.'
   } else if (!blank(draft.peakMiles) && peakMiles === undefined) {
