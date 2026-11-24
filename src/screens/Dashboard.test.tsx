@@ -9,9 +9,10 @@ import {
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { buildBackup } from '../backup/backup'
+import { PlanSettingsProvider } from '../plan/PlanSettingsProvider'
 import { StorageProvider } from '../storage/StorageProvider'
 import type { AppStorage } from '../storage/types'
-import { emptyStorage, seededStorage } from '../test/fixtures'
+import { emptyStorage, laterPlan, seededStorage } from '../test/fixtures'
 import { Dashboard } from './Dashboard'
 
 // The Planned runs card only, since the today card can repeat a run's words.
@@ -1099,5 +1100,19 @@ describe('Dashboard: the run page', () => {
     expect(
       screen.getByRole('heading', { name: 'Calendar' }),
     ).toBeInTheDocument()
+  })
+})
+
+describe('Dashboard: with a different plan', () => {
+  it('shows the week from the start date in the settings', async () => {
+    render(
+      <PlanSettingsProvider plan={laterPlan}>
+        <StorageProvider storage={emptyStorage()}>
+          <Dashboard today="2026-11-17" newId={() => 'x'} />
+        </StorageProvider>
+      </PlanSettingsProvider>,
+    )
+    // Nov 17 is week 1 of this plan (week 2 of the built-in one).
+    expect(await screen.findByText('Week 1 of 19')).toBeInTheDocument()
   })
 })

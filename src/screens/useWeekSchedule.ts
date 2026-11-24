@@ -26,7 +26,7 @@ import type {
   WeekTarget,
 } from '../engine/types'
 import type { PlanView } from '../plan/progress'
-import { PLAN } from '../plan/settings'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import {
   matchWeek,
   overrideClears,
@@ -73,6 +73,7 @@ export const useWeekSchedule = (
   refresh: () => void
 } => {
   const storage = useStorage()
+  const { startDate } = usePlanSettings()
   const weekIndex = view.status === 'inProgress' ? view.weekIndex : undefined
   const [loaded, setLoaded] = useState<Loaded | undefined>()
   const [error, setError] = useState<string | undefined>()
@@ -101,7 +102,7 @@ export const useWeekSchedule = (
   const ready = loaded && loaded.weekIndex === weekIndex ? loaded : undefined
   const week = useMemo(() => {
     if (weekIndex === undefined || !view.target || !ready) return undefined
-    const weekStart = weekStartDate(weekIndex, PLAN.startDate)
+    const weekStart = weekStartDate(weekIndex, startDate)
     return {
       weekStart,
       ...matchWeek({
@@ -113,7 +114,7 @@ export const useWeekSchedule = (
         today,
       }),
     }
-  }, [weekIndex, view.target, ready, runs, today])
+  }, [weekIndex, startDate, view.target, ready, runs, today])
 
   const kinds = useMemo(
     () =>

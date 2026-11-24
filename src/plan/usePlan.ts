@@ -7,13 +7,15 @@
  * - Each load reads runs, check-ins and saved weeks, runs computePlan, and
  *   saves any ended weeks that are new or changed. That is how weeks close
  *   themselves. Saving twice is harmless because saves replace by week.
- * - It loads again when storage or today changes (midnight), or on reload().
+ * - The plan comes from usePlanSettings(). It loads again when storage, the
+ *   settings or today changes (midnight), or on reload().
  *   A reload keeps showing the old plan until the new one arrives.
  */
 import { useCallback, useEffect, useState } from 'react'
 import type { CheckIn, IsoDate, Run } from '../engine/types'
 import { useStorage } from '../storage/useStorage'
 import { computePlan, type PlanView } from './progress'
+import { usePlanSettings } from './usePlanSettings'
 
 export type PlanState =
   | { status: 'loading' }
@@ -24,6 +26,7 @@ export const usePlan = (
   today: IsoDate,
 ): { state: PlanState; reload: () => void } => {
   const storage = useStorage()
+  const settings = usePlanSettings()
   const [state, setState] = useState<PlanState>({ status: 'loading' })
   const [version, setVersion] = useState(0)
 
@@ -36,7 +39,13 @@ export const usePlan = (
         storage.getCheckIns(),
         storage.getWeekResults(),
       ])
-      const view = computePlan({ runs, checkIns, savedResults, today })
+      const view = computePlan({
+        runs,
+        checkIns,
+        savedResults,
+        today,
+        settings,
+      })
       await Promise.all(
         view.resultsToSave.map((result) => storage.saveWeekResult(result)),
       )
@@ -55,7 +64,7 @@ export const usePlan = (
     return () => {
       active = false
     }
-  }, [storage, today, version])
+  }, [storage, settings, today, version])
 
   const reload = useCallback(() => setVersion((current) => current + 1), [])
   return { state, reload }

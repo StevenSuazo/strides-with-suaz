@@ -9,7 +9,7 @@
 import { daysUntilRace } from '../engine'
 import type { IsoDate } from '../engine/types'
 import type { PlanView } from '../plan/progress'
-import { PLAN } from '../plan/settings'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { AFTER } from './decisionLabels'
 
 const formatMiles = (value: number): string => String(Number(value.toFixed(2)))
@@ -17,8 +17,8 @@ const formatMiles = (value: number): string => String(Number(value.toFixed(2)))
 const plural = (count: number, word: string): string =>
   `${count} ${word}${count === 1 ? '' : 's'}`
 
-const raceCountdown = (today: IsoDate): string => {
-  const days = daysUntilRace(today, PLAN.raceDate)
+const raceCountdown = (today: IsoDate, raceDate: IsoDate): string => {
+  const days = daysUntilRace(today, raceDate)
   return days === 0 ? 'Race day!' : `${plural(days, 'day')} to the race`
 }
 
@@ -45,8 +45,9 @@ export const ThisWeek = ({
   view: PlanView
   today: IsoDate
 }) => {
+  const { startDate, raceDate, totalWeeks } = usePlanSettings()
   if (view.status === 'notStarted') {
-    const days = daysUntilRace(today, PLAN.startDate)
+    const days = daysUntilRace(today, startDate)
     return (
       <section className="this-week card">
         <h2>{`Plan starts in ${plural(days, 'day')}`}</h2>
@@ -71,8 +72,8 @@ export const ThisWeek = ({
 
   return (
     <section className="this-week card">
-      <h2>{`Week ${view.weekIndex} of ${PLAN.totalWeeks}`}</h2>
-      <p className="countdown">{raceCountdown(today)}</p>
+      <h2>{`Week ${view.weekIndex} of ${totalWeeks}`}</h2>
+      <p className="countdown">{raceCountdown(today, raceDate)}</p>
 
       <p className="stat">{`Target: ${formatMiles(target.targetMiles)} miles`}</p>
       <p className="stat">{`Long run: ${formatMiles(target.longRunMiles)} miles`}</p>

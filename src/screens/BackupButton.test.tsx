@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import { PlanSettingsProvider } from '../plan/PlanSettingsProvider'
+import { PLAN } from '../plan/settings'
 import { StorageProvider } from '../storage/StorageProvider'
 import { seededStorage } from '../test/fixtures'
 import { BackupButton } from './BackupButton'
@@ -39,5 +41,31 @@ describe('BackupButton', () => {
       "Couldn't make the backup: disk full",
     )
     expect(screen.queryByText('Backup downloaded.')).not.toBeInTheDocument()
+  })
+})
+
+describe('BackupButton: the plan length', () => {
+  it('saves availability for each week of the plan in the settings', async () => {
+    const storage = await seededStorage()
+    const asked: number[] = []
+    const original = storage.getAvailability
+    storage.getAvailability = async (week) => {
+      asked.push(week)
+      return original(week)
+    }
+    render(
+      <StorageProvider storage={storage}>
+        <PlanSettingsProvider plan={{ ...PLAN, totalWeeks: 3 }}>
+          <BackupButton
+            today="2026-11-18"
+            now={() => '2026-11-18T05:00:00.000Z'}
+            download={() => {}}
+          />
+        </PlanSettingsProvider>
+      </StorageProvider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Download backup' }))
+    await screen.findByText('Backup downloaded.')
+    expect(asked.sort()).toEqual([1, 2, 3])
   })
 })

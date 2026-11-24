@@ -16,7 +16,7 @@ import type {
   WeekAvailability,
   WeekTarget,
 } from '../engine/types'
-import { PLAN } from '../plan/settings'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { matchWeek } from '../plan/weekMatch'
 import { useStorage } from '../storage/useStorage'
 import { WeekStrip } from './WeekStrip'
@@ -44,6 +44,7 @@ export const PastWeekStrip = ({
   stripLabel?: string
 }) => {
   const storage = useStorage()
+  const { startDate } = usePlanSettings()
   const [loaded, setLoaded] = useState<Loaded>()
   const [error, setError] = useState<string>()
 
@@ -65,7 +66,7 @@ export const PastWeekStrip = ({
   if (error) return <p role="alert">{`Couldn't load this week: ${error}`}</p>
   if (!loaded) return <p className="muted">Loading…</p>
 
-  const weekStart = weekStartDate(weekIndex, PLAN.startDate)
+  const weekStart = weekStartDate(weekIndex, startDate)
   const { rows, extraRuns } = matchWeek({
     weekIndex,
     weekStart,

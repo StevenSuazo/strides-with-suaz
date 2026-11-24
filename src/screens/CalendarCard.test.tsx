@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest'
 import type { Run } from '../engine/types'
 import { computePlan } from '../plan/progress'
 import { StorageProvider } from '../storage/StorageProvider'
-import { emptyStorage } from '../test/fixtures'
+import { emptyStorage, laterPlan } from '../test/fixtures'
+import { PlanSettingsProvider } from '../plan/PlanSettingsProvider'
 import { weekOneRuns } from '../test/fixtures'
 import { CalendarCard } from './CalendarCard'
 
@@ -193,5 +194,28 @@ describe('CalendarCard: the projected week', () => {
       </StorageProvider>,
     )
     expect(screen.queryByText(/Projected/)).not.toBeInTheDocument()
+  })
+})
+
+describe('CalendarCard: with a different plan', () => {
+  it('dates the projected week from the start date in the settings', () => {
+    const laterView = computePlan({
+      runs: [],
+      checkIns: [],
+      savedResults: [],
+      today: TODAY,
+      settings: laterPlan,
+    })
+    render(
+      <PlanSettingsProvider plan={laterPlan}>
+        <StorageProvider storage={emptyStorage()}>
+          <CalendarCard view={laterView} runs={[]} today={TODAY} />
+        </StorageProvider>
+      </PlanSettingsProvider>,
+    )
+    // Week 1 is Nov 16-22 in this plan, so the projected week 2 is Nov 23-29.
+    expect(screen.getByRole('button', { name: /Week 2/ })).toHaveTextContent(
+      'Nov 23–29',
+    )
   })
 })

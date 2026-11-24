@@ -21,7 +21,7 @@ import type { IsoDate, Run, WeekTarget } from '../engine/types'
 import { targetForWeek } from '../plan/pastWeeks'
 import type { PlanView, SettledWeek } from '../plan/progress'
 import { projectedRows } from '../plan/projection'
-import { PLAN } from '../plan/settings'
+import { usePlanSettings } from '../plan/usePlanSettings'
 import { dateOfDay, type PlannedRow } from '../plan/weekMatch'
 import { AFTER } from './decisionLabels'
 import { formatMiles, formatRange } from './format'
@@ -48,10 +48,11 @@ const PastWeek = ({
   today: IsoDate
   onOpenRun?: (run: Run) => void
 }) => {
+  const settings = usePlanSettings()
   const [open, setOpen] = useState(false)
   const { weekIndex, targetMiles, actualMiles } = week.result
-  const weekStart = weekStartDate(weekIndex, PLAN.startDate)
-  const target = targetForWeek(view, weekIndex)
+  const weekStart = weekStartDate(weekIndex, settings.startDate)
+  const target = targetForWeek(view, weekIndex, settings)
   return (
     <li className="calendar-week">
       <button
@@ -150,9 +151,10 @@ export const CalendarCard = ({
   current?: CurrentWeek
   onOpenRun?: (run: Run) => void
 }) => {
+  const { startDate } = usePlanSettings()
   const past = [...view.weeks].reverse()
   const next = view.status === 'inProgress' ? view.projectedNext : undefined
-  const nextStart = next && weekStartDate(next.weekIndex, PLAN.startDate)
+  const nextStart = next && weekStartDate(next.weekIndex, startDate)
   if (!current && !next && past.length === 0) return null
   return (
     <section className="card calendar-card">

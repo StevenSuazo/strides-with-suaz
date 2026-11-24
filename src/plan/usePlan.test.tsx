@@ -6,10 +6,13 @@ import { StorageProvider } from '../storage/StorageProvider'
 import type { AppStorage } from '../storage/types'
 import {
   emptyStorage,
+  laterPlan,
   seededStorage,
   weekOne,
   weekOneRuns,
 } from '../test/fixtures'
+import { PlanSettingsProvider } from './PlanSettingsProvider'
+import { PLAN } from './settings'
 import { usePlan } from './usePlan'
 
 const setup = (storage: AppStorage, today = '2026-11-17') =>
@@ -108,5 +111,37 @@ describe('usePlan', () => {
 
     rerender({ day: '2026-11-23' })
     await waitFor(() => expect(view(result).weekIndex).toBe(3))
+  })
+})
+
+describe('usePlan: the plan settings', () => {
+  const withPlan = (initial = PLAN) => {
+    const current = { plan: initial }
+    const hook = renderHook(() => usePlan('2026-11-17'), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <StorageProvider storage={emptyStorage()}>
+          <PlanSettingsProvider plan={current.plan}>
+            {children}
+          </PlanSettingsProvider>
+        </StorageProvider>
+      ),
+    })
+    return { ...hook, current }
+  }
+
+  it('counts weeks from the start date in the settings', async () => {
+    const { result } = withPlan(laterPlan)
+    await waitFor(() => expect(isReady(result)).toBe(true))
+    expect(view(result).weekIndex).toBe(1) // the built-in plan would say 2
+  })
+
+  it('works the plan out again when the settings change', async () => {
+    const { result, rerender, current } = withPlan()
+    await waitFor(() => expect(isReady(result)).toBe(true))
+    expect(view(result).weekIndex).toBe(2)
+
+    current.plan = laterPlan
+    rerender()
+    await waitFor(() => expect(view(result).weekIndex).toBe(1))
   })
 })
